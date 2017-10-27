@@ -15,7 +15,7 @@ from IlluminaBeadArrayFiles import GenotypeCalls
 from VcfRecordFactory import VcfRecordFactory
 from ReaderTemplateFactory import ReaderTemplateFactory
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 def is_dir_writable(parent_dir):
     try:

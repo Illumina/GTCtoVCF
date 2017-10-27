@@ -63,11 +63,7 @@ class ReaderTemplateFactory(object):
             vcf_handle.write("##source=" + self._software_id + "\n")
             vcf_handle.write(
                 "##reference=file://" + os.path.abspath(self._genome_reader.genome_fasta_file) + "\n")
-            vcf_handle.write("#CHROM  POS ID  REF ALT QUAL    FILTER  INFO")
-
-            for sample_id in sample_ids:
-                vcf_handle.write("\t" + sample_id)
-            vcf_handle.write("\n")
+            vcf_handle.write("#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n")
 
         with open(temp_path) as vcf_handle:
             reader_template = Reader(vcf_handle)

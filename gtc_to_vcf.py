@@ -123,7 +123,9 @@ def add_file_logger(logger, log_file):
     handler.setFormatter(formatter)
     logger.addHandler(handler)
 
-
+def read_loci(loci_file):
+    for line in open(loci_file):
+        yield line.rstrip()
 
 def read_auxiliary_records(auxiliary_loci):
     if auxiliary_loci is not None:
@@ -135,7 +137,8 @@ def read_auxiliary_records(auxiliary_loci):
     else:
         return None
 
-def driver(gtc_file, manifest_file, genome_fasta_file, output_vcf_file, skip_indels, expand_identifiers, unsquash_duplicates, auxiliary_loci, logger):
+def driver(gtc_file, manifest_file, genome_fasta_file, output_vcf_file, skip_indels, expand_identifiers, unsquash_duplicates, auxiliary_loci, loci_file, logger):
+    loci_to_filter = read_loci(loci_file) if loci_file is not None else None
 
     if manifest_file.lower().endswith(".bpm"):
         bpm_reader = BPMReader(manifest_file)
@@ -170,7 +173,7 @@ def driver(gtc_file, manifest_file, genome_fasta_file, output_vcf_file, skip_ind
 
     vcf_record_factory = VcfRecordFactory(call_factory, genome_reader, expand_identifiers, auxiliary_records, logger)
 
-    locus_entries = LocusEntryFactory(vcf_record_factory, locus_info_factory, call_factory, skip_indels, chrom_sort, unsquash_duplicates, logger).create_locus_entries(bpm_reader)
+    locus_entries = LocusEntryFactory(vcf_record_factory, locus_info_factory, call_factory, skip_indels, chrom_sort, unsquash_duplicates, logger).create_locus_entries(bpm_reader, loci_to_filter)
 
     if gtc_file:
         for entry in locus_entries:
@@ -198,6 +201,7 @@ def main():
     parser.add_argument("--expand-identifiers", dest="expand_identifiers", action="store_true", default=False, help="For VCF entries with multiple corresponding manifest entries, list all manifest identifiers in VCF ID field")
     parser.add_argument("--unsquash-duplicates", dest="unsquash_duplicates", action="store_true", default=False, help="Generate unique VCF records for duplicate assays")
     parser.add_argument("--auxiliary-loci", dest="auxiliary_loci", default=None, required=False, help="VCF file with auxiliary definitions of loci")
+    parser.add_argument("--filter-loci", dest="filter_loci", default=None, required=False, help="File containing list of loci names to filter from input manifest")
     parser.add_argument("--version", action="version", version='%(prog)s ' + VERSION)
     args = parser.parse_args()
 
@@ -211,7 +215,7 @@ def main():
         sys.exit(1)
 
     try:
-        driver(args.gtc_file, args.manifest_file, args.genome_fasta_file, args.output_vcf_file, args.skip_indels, args.expand_identifiers, args.unsquash_duplicates, args.auxiliary_loci, logger)
+        driver(args.gtc_file, args.manifest_file, args.genome_fasta_file, args.output_vcf_file, args.skip_indels, args.expand_identifiers, args.unsquash_duplicates, args.auxiliary_loci, args.filter_loci, logger)
     except Exception as e:
         logger.error(str(e))
         logger.debug(traceback.format_exc(e))

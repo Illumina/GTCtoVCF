@@ -27,29 +27,31 @@ class LocusEntryFactory(object):
         self._logger = logger
         self._skip_indels = skip_indels
 
-    def create_locus_entries(self, bpm_reader):
+    def create_locus_entries(self, bpm_reader, loci_to_filter):
         """
         Generate locus entries from BPM records without
         any sample information.
 
         Args:
             bpm_reader (BPMReader): Provides BPM records
+            loci_to_filter (set(string)): Set of loci names to filter from the manifest
         
         Returns:
             list(LocusEntry): List of locus entries corresponding to BPM records
         """
         result = []
-        for record_group in self._group_bpm_records(bpm_reader.get_bpm_records()):
+        for record_group in self._group_bpm_records(bpm_reader.get_bpm_records(), loci_to_filter):
             result.append(self._generate_locus_entry(record_group))
         return sorted(result, key=lambda entry: (self._chrom_sort_function(entry.vcf_record.CHROM), entry.vcf_record.POS))
 
-    def _group_bpm_records(self, bpm_records):
+    def _group_bpm_records(self, bpm_records, loci_to_filter):
         """
         Group BPM records into groups where all BPM records in a single
         group will be represented in the same VCF record
         
         Args:
             bpm_reader (BPMReader): Provides BPM records
+            loci_to_filter (set(string)): Set of loci names to filter from the manifest
         
         Yields:
             list(BPMRecord): Next group of BPM records
@@ -57,6 +59,8 @@ class LocusEntryFactory(object):
         position2record = {}
         for record in bpm_records:
             if record.chromosome == "0" or record.pos == 0:
+                continue
+            if loci_to_filter is not None and record.name in loci_to_filter:
                 continue
             if record.is_indel() and self._skip_indels:
                 self._logger.warning("Skipping indel " + record.name)

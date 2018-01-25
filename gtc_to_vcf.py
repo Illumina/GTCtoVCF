@@ -138,7 +138,7 @@ def read_auxiliary_records(auxiliary_loci):
         return None
 
 def driver(gtc_file, manifest_file, genome_fasta_file, output_vcf_file, skip_indels, expand_identifiers, unsquash_duplicates, auxiliary_loci, loci_file, logger):
-    loci_to_filter = read_loci(loci_file) if loci_file is not None else None
+    loci_to_filter = set(read_loci(loci_file)) if loci_file is not None else None
 
     if manifest_file.lower().endswith(".bpm"):
         bpm_reader = BPMReader(manifest_file)

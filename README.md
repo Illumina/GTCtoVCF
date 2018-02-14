@@ -28,6 +28,9 @@ optional arguments:
                         Generate unique VCF records for duplicate assays
   --auxiliary-loci AUXILIARY_LOCI
                         VCF file with auxiliary definitions of loci
+  --filter-loci FILTER_LOCI
+                        File containing list of loci names to filter from
+                        input manifest
   --version             show program's version number and exit
 ```
 ## Input details

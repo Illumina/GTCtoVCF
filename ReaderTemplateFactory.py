@@ -3,7 +3,6 @@ from tempfile import mkstemp
 from collections import OrderedDict
 from vcf.parser import Reader, _Contig
 
-
 class ReaderTemplateFactory(object):
     """Class to create new reader templates"""
 
@@ -91,7 +90,7 @@ class ReaderTemplateFactory(object):
             dict(string,_Contig): Contig information
         """
         contigs = {}
-        for contig_name, length in zip(self._genome_reader.fasta_file.references, self._genome_reader.fasta_file.lengths):
+        for contig_name, length in self._genome_reader.get_contig_lengths():
             if contig_name.isdigit():
                 contigs[int(contig_name)] = _Contig(contig_name, length)
             else:

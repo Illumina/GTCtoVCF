@@ -7,6 +7,7 @@ usage: gtc_to_vcf.py [-h] [--gtc-file GTC_FILE] --manifest-file MANIFEST_FILE
                      [--output-vcf-file OUTPUT_VCF_FILE] [--skip-indels]
                      [--log-file LOG_FILE] [--expand-identifiers]
                      [--unsquash-duplicates] [--auxiliary-loci AUXILIARY_LOCI]
+                     [--filter-loci FILTER_LOCI] [--disable-genome-cache]
                      [--version]
 
 Convert GTC file to VCF format
@@ -31,7 +32,10 @@ optional arguments:
   --filter-loci FILTER_LOCI
                         File containing list of loci names to filter from
                         input manifest
+  --disable-genome-cache
+                        Disable caching of genome reference data
   --version             show program's version number and exit
+
 ```
 ## Input details
 ### Manifests
@@ -47,6 +51,9 @@ The contig identifiers in the provided genome FASTA file must match exactly the 
 
 ### Squashing duplicates
 In the manifest, there can be cases where the same variant is probed by multiple different assays. These assays may be the same design or alternate designs for the same locus. In the default mode of operation, these duplicates will be "squashed" into a single record in the VCF. The method used to incorporate information across multiple assays is under the latter "Output description" heading. When the "--unsquash-duplicates" option is provided, this "squashing" behavior is disabled, and each duplicate assay will be reported in a separate entry in the VCF file. This option is helpful when you are interested in investigating or validating the performance of individual assays, rather than trying to generate genotypes for specific variants. Note that if an locus has more than two alleles and is also queried with duplicated designs, the duplicates will not be unsquashed. 
+
+### Genome cache
+By default, the entire reference genome will be read into memory. Generally, this will be more efficient than reading data from the indexed reference on disk at the expense of greater memory utilization. For situations in which the genome caching is not desirable (low memory availability or a small input manifest), it is possible to disable this default behavior with the "--disable-genome-cache" option. 
 
 ### Auxiliary loci
 Certain classes of variant types (such as multi-nucleotide variants) are not currently supported in the upstream analysis software that produces GTC files. However, it is possible to query this type of variant by creating a SNP design that differentiates the specific multi-nucleotide alleles of interest. For example, if the true source sequence is

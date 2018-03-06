@@ -52,7 +52,7 @@ class GencallFormat(object):
         Args:
             bpm_records (iter(BPMRecord)) : BPM records
             vcf_record (vcf._Record): VCF record
-            sample_namem (string): Name of sample
+            sample_name (string): Name of sample
 
         Returns:
             float: Minimum GenCall score (or None for empty arguments)

@@ -11,7 +11,7 @@ from vcf.parser import Writer, Reader
 from BPMReader import BPMReader, CSVManifestReader
 from LocusEntryFactory import LocusEntryFactory
 from CallFactory import CallFactory
-from ReferenceGenome import ReferenceGenome
+from ReferenceGenome import ReferenceGenome, CachedReferenceGenome
 from IlluminaBeadArrayFiles import GenotypeCalls
 from VcfRecordFactory import VcfRecordFactory
 from ReaderTemplateFactory import ReaderTemplateFactory
@@ -136,7 +136,7 @@ def read_auxiliary_records(auxiliary_loci):
     else:
         return None
 
-def driver(gtc_files, manifest_file, genome_fasta_file, output_vcf_files, skip_indels, expand_identifiers, unsquash_duplicates, auxiliary_loci, loci_file, logger):
+def driver(gtc_files, manifest_file, genome_fasta_file, output_vcf_files, skip_indels, expand_identifiers, unsquash_duplicates, auxiliary_loci, loci_file, disable_genome_cache, logger):
     loci_to_filter = set(read_loci(loci_file)) if loci_file is not None else None
 
     if manifest_file.lower().endswith(".bpm"):
@@ -149,7 +149,10 @@ def driver(gtc_files, manifest_file, genome_fasta_file, output_vcf_files, skip_i
         raise Exception("Manifest file must end with .bpm or .csv")
 
     auxiliary_records = read_auxiliary_records(auxiliary_loci)
-    genome_reader = ReferenceGenome(genome_fasta_file, logger)
+    if disable_genome_cache:
+        genome_reader = ReferenceGenome(genome_fasta_file, logger)
+    else:
+        genome_reader = CachedReferenceGenome(ReferenceGenome(genome_fasta_file, logger), logger)
     format_factory = FormatFactory(gtc_files[0] is None, logger)
     reader_template_factory = ReaderTemplateFactory(genome_reader, format_factory, "4.1", "gtc_to_vcf " + VERSION, chrom_sort, logger)
     vcf_record_factory = VcfRecordFactory(format_factory, genome_reader, expand_identifiers, auxiliary_records, logger)
@@ -213,6 +216,7 @@ def main():
     parser.add_argument("--unsquash-duplicates", dest="unsquash_duplicates", action="store_true", default=False, help="Generate unique VCF records for duplicate assays")
     parser.add_argument("--auxiliary-loci", dest="auxiliary_loci", default=None, required=False, help="VCF file with auxiliary definitions of loci")
     parser.add_argument("--filter-loci", dest="filter_loci", default=None, required=False, help="File containing list of loci names to filter from input manifest")
+    parser.add_argument("--disable-genome-cache", dest="disable_genome_cache", default=False, action="store_true", help="Disable caching of genome reference data")
     parser.add_argument("--version", action="version", version='%(prog)s ' + VERSION)
     args = parser.parse_args()
 
@@ -234,7 +238,7 @@ def main():
     if gtc_files[0] is not None:
         logger.info("Processing %s GTC files", str(len(gtc_files)))
     try:
-        driver(gtc_files, args.manifest_file, args.genome_fasta_file, output_vcf_files, args.skip_indels, args.expand_identifiers, args.unsquash_duplicates, args.auxiliary_loci, args.filter_loci, logger)
+        driver(gtc_files, args.manifest_file, args.genome_fasta_file, output_vcf_files, args.skip_indels, args.expand_identifiers, args.unsquash_duplicates, args.auxiliary_loci, args.filter_loci, args.disable_genome_cache, logger)
     except Exception as exception:
         logger.error(str(exception))
         logger.debug(traceback.format_exc(exception))

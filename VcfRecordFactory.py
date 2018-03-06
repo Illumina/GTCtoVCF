@@ -1,7 +1,6 @@
 from IlluminaBeadArrayFiles import RefStrand
 from vcf.model import _Record, _Substitution
 
-
 def check_reference_allele(reference_base, bpm_record_group):
     """
     Check whether the given reference base (on the plus strand) is queried
@@ -44,8 +43,8 @@ class VcfRecordFactory(object):
 
     def create_vcf_record(self, bpm_record_group):
         """
-        Generate an VCF record from a group of BPM records. 
-        Note that this may alter the BPM records for any 
+        Generate an VCF record from a group of BPM records.
+        Note that this may alter the BPM records for any
         auxiliary loci
 
         Args:

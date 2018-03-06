@@ -188,34 +188,34 @@ def driver(gtc_files, manifest_file, genome_fasta_file, output_vcf_files, skip_i
 def generate_io_files(gtc_files, output_vcf_path, manifest_file):
     if not gtc_files:
         gtc_files = [None]
-    
+
     if os.path.isdir(output_vcf_path):
         if gtc_files[0] is None:
             output_vcf_files = [os.path.join(output_vcf_path, os.path.splitext(os.path.basename(manifest_file))[0] + ".vcf")]
         else:
             output_vcf_files = []
             for gtc_file in gtc_files:
-                output_vcf_files.append([os.path.join(output_vcf_path, os.path.splitext(os.path.basename(gtc_file))[0] + ".vcf"))
+                output_vcf_files.append(os.path.join(output_vcf_path, os.path.splitext(os.path.basename(gtc_file))[0] + ".vcf"))
     else:
+        output_vcf_files = []
         if len(gtc_files) > 1:
             raise Exception("Must specify output directory (not file) when providing more than one input GTC file")
         output_vcf_files.append(output_vcf_path)
 
     return (gtc_files, output_vcf_files)
 
-
 def main():
     parser = ArgumentParser(description="Convert GTC file to VCF format")
-    parser.add_argument("--gtc-files", dest="gtc_files", nargs="+", required=False, help="GTC file")
+    parser.add_argument("--gtc-files", dest="gtc_files", nargs="+", required=False, help="One or more GTC files to process (optional)")
     parser.add_argument("--manifest-file", dest="manifest_file", required=True, help="Bead pool manifest for product (*.csv or *.bpm)")
     parser.add_argument("--genome-fasta-file", dest="genome_fasta_file", required=True, help="Reference genome in fasta format")
-    parser.add_argument("--output-vcf-path", dest="output_vcf_path", default="output.vcf", required=False, help="Name of VCF file to be created (default is output.vcf)")
+    parser.add_argument("--output-vcf-path", dest="output_vcf_path", default="output.vcf", required=False, help="Path for generation of VCF output (default is output.vcf)")
     parser.add_argument("--skip-indels", dest="skip_indels", action="store_true", default=False, help="Skip processing of indels (default is False)")
-    parser.add_argument("--log-file", dest="log_file", default=None, required=False, help="File to write logging information")
+    parser.add_argument("--log-file", dest="log_file", default=None, required=False, help="File to write logging information (optional)")
     parser.add_argument("--expand-identifiers", dest="expand_identifiers", action="store_true", default=False, help="For VCF entries with multiple corresponding manifest entries, list all manifest identifiers in VCF ID field")
     parser.add_argument("--unsquash-duplicates", dest="unsquash_duplicates", action="store_true", default=False, help="Generate unique VCF records for duplicate assays")
-    parser.add_argument("--auxiliary-loci", dest="auxiliary_loci", default=None, required=False, help="VCF file with auxiliary definitions of loci")
-    parser.add_argument("--filter-loci", dest="filter_loci", default=None, required=False, help="File containing list of loci names to filter from input manifest")
+    parser.add_argument("--auxiliary-loci", dest="auxiliary_loci", default=None, required=False, help="VCF file with auxiliary definitions of loci (optional)")
+    parser.add_argument("--filter-loci", dest="filter_loci", default=None, required=False, help="File containing list of loci names to filter from input manifest (optional)")
     parser.add_argument("--disable-genome-cache", dest="disable_genome_cache", default=False, action="store_true", help="Disable caching of genome reference data")
     parser.add_argument("--version", action="version", version='%(prog)s ' + VERSION)
     args = parser.parse_args()
@@ -246,5 +246,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

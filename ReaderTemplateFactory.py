@@ -7,20 +7,20 @@ from vcf.parser import Reader, _Contig
 class ReaderTemplateFactory(object):
     """Class to create new reader templates"""
 
-    def __init__(self, genome_reader, call_factory, vcf_version, software_id, chrom_sort_function, logger):
+    def __init__(self, genome_reader, format_factory, vcf_version, software_id, chrom_sort_function, logger):
         """Create new ReaderTemplateFactory
 
         Args
             genome_reader (GenomeReader): Genome reader
-            call_factor (CallFactory): Call factory
+            format_factory (FormatFactory): FormatFactory to provide information about format_string
             vcf_version (string): version of VCF file
             software_id (string): identifier for software creating the VCF
-                chrom_sort_function(string): function definition used to sort chromosomes
+            chrom_sort_function(string): function definition used to sort chromosomes
         Returns
             ReaderTemplateFactory
         """
         self._genome_reader = genome_reader
-        self._call_factory = call_factory
+        self._format_factory = format_factory
         self._vcf_version = vcf_version
         self._software_id = software_id
         self._chrom_sort_function = chrom_sort_function
@@ -38,9 +38,9 @@ class ReaderTemplateFactory(object):
             None
         """
 
-        format_objects = self._call_factory.get_format_objects()
+        format_objects = self._format_factory.get_format_objects()
         if not format_objects:
-            self._logger.warn("No FORMAT info available from CallFactory")
+            self._logger.warn("No format info available")
             return
 
         for format_object in format_objects:
@@ -69,7 +69,7 @@ class ReaderTemplateFactory(object):
             reader_template = Reader(vcf_handle)
 
         reader_template.contigs = self.create_header_contigs()
-        if len(sample_ids) > 0:
+        if sample_ids:
             reader_template._column_headers.append("FORMAT")
             self.add_format_data(reader_template)
             reader_template.samples = sample_ids

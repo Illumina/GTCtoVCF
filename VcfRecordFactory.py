@@ -1,6 +1,7 @@
 from IlluminaBeadArrayFiles import RefStrand
 from vcf.model import _Record, _Substitution
 
+
 def check_reference_allele(reference_base, bpm_record_group):
     """
     Check whether the given reference base (on the plus strand) is queried
@@ -21,12 +22,12 @@ def check_reference_allele(reference_base, bpm_record_group):
 class VcfRecordFactory(object):
     """Class to create new VCF records"""
 
-    def __init__(self, call_factory, genome_reader, expand_identifiers, auxiliary_records, logger):
+    def __init__(self, format_factory, genome_reader, expand_identifiers, auxiliary_records, logger):
         """
         Create a new VcfRecordFactory
 
         Args:
-            call_factory (CallFactory): Adds Calls to a VCF record
+            format_factory (FormatFactory): Provides format information need to create VCF records
             genome_reader (GenomeReader): Query genomic sequence regions
             expand_identifiers (bool): If true, VCF record id will be comma-delimited list of all BPM identifiers. If false, will use shortest identifier.
             auxiliary_records (dict(string, vcf._Record)): Maps from BPM identifer to VCF record with alternate annotation for that BPM entry
@@ -35,7 +36,7 @@ class VcfRecordFactory(object):
         Returns:
             VcfRecordFactory
         """
-        self._call_factory = call_factory
+        self._format_factory = format_factory
         self._genome_reader = genome_reader
         self._expand_identifiers = expand_identifiers
         self._auxiliary_records = auxiliary_records
@@ -46,10 +47,10 @@ class VcfRecordFactory(object):
         Generate an VCF record from a group of BPM records. 
         Note that this may alter the BPM records for any 
         auxiliary loci
-        
+
         Args:
             bpm_record_group (list(BPMRecord)): List of BPM records to use to create single VCF record
-        
+
         Returns:
             vcf._Record: New VCF record
         """
@@ -120,7 +121,7 @@ class VcfRecordFactory(object):
                     bpm_record.plus_strand_alleles = new_plus_strand_alleles
 
                     return _Record(auxiliary_record.CHROM, auxiliary_record.POS, identifier, auxiliary_record.REF, auxiliary_record.ALT, qual, filt, info,
-                                   self._call_factory.get_format_id_string(), sample_indexes)
+                                   self._format_factory.get_format_id_string(), sample_indexes)
         else:
             if bpm_record.is_indel():
                 indel_sequence = bpm_record.get_plus_strand_indel_sequence()
@@ -142,7 +143,7 @@ class VcfRecordFactory(object):
                     return _Record(chrom, start_index, identifier, reference_allele,
                                    [_Substitution(alternate_allele)
                                     ], qual, filt, info,
-                                   self._call_factory.get_format_id_string(), sample_indexes)
+                                   self._format_factory.get_format_id_string(), sample_indexes)
                 else:
                     reference_base = self._genome_reader.get_reference_bases(
                         chrom, start_index, start_index + 1)
@@ -151,7 +152,7 @@ class VcfRecordFactory(object):
                     return _Record(chrom, start_index + 1, identifier, reference_allele,
                                    [_Substitution(alternate_allele)
                                     ], qual, filt, info,
-                                   self._call_factory.get_format_id_string(), sample_indexes)
+                                   self._format_factory.get_format_id_string(), sample_indexes)
             else:
                 reference_base = self._genome_reader.get_reference_bases(
                     chrom, start_index, start_index + 1)
@@ -168,4 +169,4 @@ class VcfRecordFactory(object):
                                 alts.append(_Substitution(nucleotide))
 
                 return _Record(chrom, bpm_record.pos, identifier, reference_base, alts, qual, filt, info,
-                               self._call_factory.get_format_id_string(), sample_indexes)
+                               self._format_factory.get_format_id_string(), sample_indexes)

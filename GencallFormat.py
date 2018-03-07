@@ -1,32 +1,36 @@
 from vcf.parser import _Format
 
-class GencallGenerator(object):
+class GencallFormat(object):
     """
     Generate GQ format information for VCF
-
-    Attributes:
-        id_string (string): "GQ"
-        description (string): Format description
-        format_obj (vcf._Format): VCF format object
     """
 
     def __init__(self, logger, gencall_scores):
         """
-        Create new GenCallGenerator object
+        Create new GencallFormat object
 
         Args:
             logger (logging.Logger): Logging object for errors/warnings
             gencall_scores (list(float)): List of all gencall scores for all loci across sample
 
         Returns
-            GencallGenerator
-        """
-        self.id_string = "GQ"
-        self.description = "GenCall score. For merged multi-locus entries, min(GenCall) score is reported."
-        self.format_obj = _Format(
-            self.id_string, 1, "String", self.description)
+            GencallFormat
+        """ 
         self._logger = logger
         self._gencall_scores = gencall_scores
+
+    @staticmethod
+    def get_id():
+        return "GQ"
+
+    @staticmethod
+    def get_description():
+        return "GenCall score. For merged multi-locus entries, min(GenCall) score is reported."
+
+    @staticmethod
+    def get_format_obj():
+        return _Format(
+            GencallFormat.get_id(), 1, "String", GencallFormat.get_description())
 
     def _get_min_gencall_score(self, bpm_records):
         """

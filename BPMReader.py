@@ -1,5 +1,5 @@
 from IlluminaBeadArrayFiles import BeadPoolManifest, RefStrand
-from BPMRecord import BPMRecord, reverse_complement
+from BPMRecord import BPMRecord, reverse_complement, IndelSourceSequence
 
 class BPMReader(object):
     """Get records from a BPM manifest file"""
@@ -28,23 +28,7 @@ class BPMReader(object):
         """
         bpm = self.bpm
         for idx in xrange(len(bpm.addresses)):
-            yield BPMRecord(bpm.names[idx], bpm.addresses[idx], bpm.chroms[idx], bpm.map_infos[idx], bpm.snps[idx], bpm.ref_strands[idx], bpm.assay_types[idx], None, idx)
-
-
-def get_indel_sequence(source_sequence):
-    """
-    Extract indel sequence from a source sequence string
-
-    Args:
-        source_sequence (string): Source sequence string
-
-    Returns:
-        string: The sequence of the indel
-    """
-    left_position = source_sequence.find("/")
-    right_position = source_sequence.find("]")
-    assert source_sequence[left_position - 1] == "-"
-    return source_sequence[(left_position + 1):right_position]
+            yield BPMRecord(bpm.names[idx], bpm.addresses[idx], None, bpm.chroms[idx], bpm.map_infos[idx], bpm.snps[idx], bpm.ref_strands[idx], bpm.assay_types[idx], None, idx)
 
 
 class CSVManifestReader(object):
@@ -63,7 +47,7 @@ class CSVManifestReader(object):
         """
         self._csv_file = csv_file
         self._required_columns = ("sourcestrand", "ilmnstrand", "name",
-                                  "chr", "mapinfo", "refstrand", "sourceseq", "snp", "addressb_id")
+                                  "chr", "mapinfo", "refstrand", "sourceseq", "snp", "addressb_id", "allelea_probeseq")
         self._logger = logger
 
     def get_bpm_records(self):
@@ -101,7 +85,7 @@ class CSVManifestReader(object):
             if in_data:
                 idx += 1
                 bits = line.rstrip().split(",")
-                (source_strand, ilmn_strand, name, chrom, map_info, ref_strand, source_seq, snp, addressb_id) = [
+                (source_strand, ilmn_strand, name, chrom, map_info, ref_strand, source_seq, snp, addressb_id, probe_a) = [
                     bits[required_column2idx[column]] for column in self._required_columns]
 
                 #
@@ -111,21 +95,9 @@ class CSVManifestReader(object):
                 ilmn_strand = ilmn_strand[0].upper()
 
                 if "D" in snp:
-                    if source_strand == "U" or ilmn_strand == "U":
-                        logger.warn("Skipping indel " + name +
-                                    " with unknown ILMN or source strand")
-                        continue
-
-                    indel_sequence = get_indel_sequence(source_seq)
-                    if source_strand == "P" or source_strand == "M":
-                        assert ilmn_strand == "P" or ilmn_strand == "M"
-                    else:
-                        assert ilmn_strand == "T" or ilmn_strand == "B"
-
-                    if source_strand != ilmn_strand:
-                        indel_sequence = reverse_complement(indel_sequence)
+                    indel_source_sequence = IndelSourceSequence(source_seq, source_strand, ilmn_strand)
                 else:
-                    indel_sequence = None
+                    indel_source_sequence = None
 
                 assay_type = 0 if addressb_id == "" else 1
-                yield BPMRecord(name, 0, chrom, map_info, snp, RefStrand.from_string(ref_strand), assay_type, indel_sequence, idx)
+                yield BPMRecord(name, 0, probe_a, chrom, map_info, snp, RefStrand.from_string(ref_strand), assay_type, indel_source_sequence, idx)

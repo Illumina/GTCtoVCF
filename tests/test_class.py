@@ -4,10 +4,25 @@ import unittest
 
 sys.path.append(os.path.join(os.path.dirname(os.path.realpath(__file__)), os.pardir))
 
-from CallFactory import RecordCombiner
+from GenotypeGenerator import RecordCombiner
 from BPMRecord import BPMRecord
 from IlluminaBeadArrayFiles import RefStrand
+from BPMRecord import split_source_sequence
 
+class TestSourceSequence(unittest.TestCase):
+    def setUp(self):
+        pass
+    
+    def test_source_sequence_split(self):
+        (five_prime, indel, three_prime) = split_source_sequence("ACGT[-/ATAT]GGTA")
+        self.assertEqual(five_prime, "ACGT")
+        self.assertEqual(indel, "ATAT")
+        self.assertEqual(three_prime, "GGTA")
+
+        (five_prime, indel, three_prime) = split_source_sequence("[-/ATAT]")
+        self.assertEqual(five_prime, "")
+        self.assertEqual(indel, "ATAT")
+        self.assertEqual(three_prime, "")
 
 class TestCombinedGenotypes(unittest.TestCase):
     def setUp(self):

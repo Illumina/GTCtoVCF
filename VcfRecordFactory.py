@@ -123,13 +123,54 @@ class VcfRecordFactory(object):
                                    self._call_factory.get_format_id_string(), sample_indexes)
         else:
             if bpm_record.is_indel():
-                indel_sequence = bpm_record.get_plus_strand_indel_sequence()
+                # note that indel will have been shifted five prime, such that five_prime sequence can not
+                # end with indel_sequence
+                (five_prime, indel_sequence, three_prime) = bpm_record.indel_source_sequence.get_plus_strand_sequence(bpm_record.ref_strand)
                 for record in bpm_record_group:
-                    assert record.is_indel() and record.get_plus_strand_indel_sequence() == indel_sequence
+                    assert record.is_indel() and record.indel_source_sequence.get_plus_strand_sequence(record.ref_strand)[1] == indel_sequence
+                
                 genomic_sequence = self._genome_reader.get_reference_bases(
                     chrom, start_index, start_index + len(indel_sequence))
                 assert len(indel_sequence) == len(genomic_sequence)
                 is_deletion = indel_sequence == genomic_sequence
+
+                def max_suffix_match(str1, str2):
+                    result = 0
+                    for (x,y) in zip(str1[::-1], str2[::-1]):
+                        if x == y:
+                            result += 1
+                        else:
+                            break
+                    return result
+                
+                def max_prefix_match(str1, str2):
+                    result = 0
+                    for (x,y) in zip(str1, str2):
+                        if x == y:
+                            result += 1
+                        else:
+                            break
+                    return result
+
+                genomic_deletion_five_prime = self._genome_reader.get_reference_bases(
+                    chrom, start_index - len(five_prime), start_index)
+                genomic_deletion_three_prime = self._genome_reader.get_reference_bases(
+                    chrom, start_index + len(indel_sequence), start_index + len(indel_sequence) + len(three_prime))
+
+                genomic_insertion_five_prime = self._genome_reader.get_reference_bases(
+                    chrom, start_index - len(five_prime) + 1, start_index + 1)
+                genomic_insertion_three_prime = self._genome_reader.get_reference_bases(
+                    chrom, start_index + 1, start_index + len(three_prime) + 1)
+
+                deletion_context = max_suffix_match(genomic_deletion_five_prime, five_prime) + max_prefix_match(genomic_deletion_three_prime, three_prime)
+                insertion_context = max_suffix_match(genomic_insertion_five_prime, five_prime) + max_prefix_match(genomic_insertion_three_prime, three_prime)
+
+                if is_deletion and deletion_context > insertion_context:
+                    is_deletion = True
+                elif insertion_context > deletion_context:
+                    is_deletion = False
+                else:
+                    raise Exception("Unable to determine reference allele for indel")                
 
                 for record in bpm_record_group:
                     record.is_deletion = is_deletion

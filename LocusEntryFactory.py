@@ -66,7 +66,7 @@ class LocusEntryFactory(object):
                 self._logger.warning("Skipping indel " + record.name)
                 continue
 
-            position = (record.chromosome, record.pos, record.get_plus_strand_indel_sequence())
+            position = (record.chromosome, record.pos, None if record.indel_source_sequence is None else record.indel_source_sequence.get_plus_strand_sequence(record.ref_strand)[1])
             position2record.setdefault(position, []).append(record)
         for key, value in position2record.iteritems():
             if len(value) > 1 and self._unsquash_duplicates:

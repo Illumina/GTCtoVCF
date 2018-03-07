@@ -4,7 +4,6 @@ from IlluminaBeadArrayFiles import code2genotype
 
 CHANNEL_MAP = {"A": "T", "T": "A", "C": "G", "G": "C"}
 
-
 def get_expected_ploidy(gender, chrom):
     """
     Determine expected ploidy of call based on sample's gender and chromosome. Unknown genders are processed as diploid.
@@ -269,22 +268,26 @@ class RecordCombiner(object):
         return ",".join(sorted(record_names))
 
 
-class GenotypeGenerator(object):
+class GenotypeFormat(object):
     """
-    Generate GQ format information for VCF
-
-    Attributes:
-        id_string (string): "GT"
-        description (string): "Genotype"
+    Generate GT format information for VCF
     """
     def __init__(self, logger, gender, genotypes):
-        self.id_string = "GT"
-        self.description = "Genotype"
-        self.format_obj = _Format(
-            self.id_string, 1, "String", self.description)
         self._gender = gender
         self._genotypes = genotypes
         self._logger = logger
+
+    @staticmethod
+    def get_id():
+        return "GT"
+
+    @staticmethod
+    def get_description():
+        return "Genotype"
+
+    @staticmethod
+    def get_format_obj():
+        return _Format(GenotypeFormat.get_id(), 1, "String", GenotypeFormat.get_description())
 
     def generate_sample_format_info(self, bpm_records, vcf_record, sample_name):
         """ 

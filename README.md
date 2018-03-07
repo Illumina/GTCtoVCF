@@ -1,12 +1,13 @@
 # GTC to VCF converter
 
 ## Usage
-```bash
-usage: gtc_to_vcf.py [-h] [--gtc-file GTC_FILE] --manifest-file MANIFEST_FILE
-                     --genome-fasta-file GENOME_FASTA_FILE
-                     [--output-vcf-file OUTPUT_VCF_FILE] [--skip-indels]
-                     [--log-file LOG_FILE] [--expand-identifiers]
-                     [--unsquash-duplicates] [--auxiliary-loci AUXILIARY_LOCI]
+```none
+usage: gtc_to_vcf.py [-h] [--gtc-files GTC_FILES [GTC_FILES ...]]
+                     --manifest-file MANIFEST_FILE --genome-fasta-file
+                     GENOME_FASTA_FILE [--output-vcf-path OUTPUT_VCF_PATH]
+                     [--skip-indels] [--log-file LOG_FILE]
+                     [--expand-identifiers] [--unsquash-duplicates]
+                     [--auxiliary-loci AUXILIARY_LOCI]
                      [--filter-loci FILTER_LOCI] [--disable-genome-cache]
                      [--version]
 
@@ -14,30 +15,47 @@ Convert GTC file to VCF format
 
 optional arguments:
   -h, --help            show this help message and exit
-  --gtc-file GTC_FILE   GTC file
+  --gtc-files GTC_FILES [GTC_FILES ...]
+                        One or more GTC files to process (optional)
   --manifest-file MANIFEST_FILE
                         Bead pool manifest for product (*.csv or *.bpm)
   --genome-fasta-file GENOME_FASTA_FILE
                         Reference genome in fasta format
-  --output-vcf-file OUTPUT_VCF_FILE
-                        Name of VCF file to be created (default is output.vcf)
+  --output-vcf-path OUTPUT_VCF_PATH
+                        Path for generation of VCF output (default is
+                        output.vcf)
   --skip-indels         Skip processing of indels (default is False)
-  --log-file LOG_FILE   File to write logging information
+  --log-file LOG_FILE   File to write logging information (optional)
   --expand-identifiers  For VCF entries with multiple corresponding manifest
                         entries, list all manifest identifiers in VCF ID field
   --unsquash-duplicates
                         Generate unique VCF records for duplicate assays
   --auxiliary-loci AUXILIARY_LOCI
-                        VCF file with auxiliary definitions of loci
+                        VCF file with auxiliary definitions of loci (optional)
   --filter-loci FILTER_LOCI
                         File containing list of loci names to filter from
-                        input manifest
+                        input manifest (optional)
   --disable-genome-cache
                         Disable caching of genome reference data
   --version             show program's version number and exit
 
+
 ```
 ## Input details
+### Input and output files
+Input GTC files are specified with the --gtc-files option. One or more GTC files may be specified with this option. There is a performance benefit to analyzing multiple GTC files in a single invocation of the program, as it minimizes the IO overhead of reading manifest and genome reference data to memory. When multiple input GTC files are specified, a single VCF file is produced for each input GTC file, as opposed to a single multi-sample VCF file. When no GTC file is provided, the program will still produce an output VCF file without sample genotyping information.
+
+The --output-vcf-path option may either be a file or directory. If the argument is a directory, the program will automatically determine an appropriate name for the VCF output file created within that directory. The behavior is summarized in the following table
+
+| --gtc-files | --vcf-output-path | Behavior | 
+| - | - | - | 
+| n/a | directory  | VCF filename determined from manifest filename  |
+| 1 | directory  | VCF filename determined from input GTC file  |
+| 2+ | directory  | VCF filenames determined from input GTC files  |
+| n/a | file  | VCF filename determined from --vcf-output-path argument  |
+| 1 | file  | VCF filename determined from --vcf-output-path argument  |
+| 2+ | file  | Error |
+
 ### Manifests
 The supplied manifest file may either be in CSV or BPM format; however, a CSV format manifest is required to generate indel records in the output VCF. When running the converter with a BPM manifest, indel processing must be explicitly disabled with the "--skip-indels" option. In either case, the manifest must provide RefStrand annotations. The GTC to VCF converter depends on the presence of accurate mapping information within the manifest, and may produce inaccurate results if the mapping information is incorrect. Mapping information should follow the implicit dbSNP standard, where
 * Positions are reported with 1-based indexing

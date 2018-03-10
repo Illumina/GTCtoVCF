@@ -1,7 +1,5 @@
 from IlluminaBeadArrayFiles import RefStrand
 
-#COMPLEMENT_MAP = {"A": "T", "T": "A", "C": "G", "G": "C", "D": "D", "I": "I"}
-
 COMPLEMENT_MAP = dict(zip("ABCDGHKMRTVYNID", "TVGHCDMKYABRNID"))
 
 def reverse(sequence):
@@ -19,7 +17,7 @@ def reverse(sequence):
 
 def complement(sequence):
     """
-    Complement a nucleotide sequence. Note that complement of D and I are D and I, 
+    Complement a nucleotide sequence. Note that complement of D and I are D and I,
     respectively. This is intended to be called on the "SNP" portion of a source sequence.
 
     Args:
@@ -43,8 +41,6 @@ def reverse_complement(sequence):
     """
     return reverse(complement(sequence))
 
-
-
 class BPMRecord(object):
     """
     Represents entry from a manifest.abs
@@ -63,7 +59,7 @@ class BPMRecord(object):
         is_deletion (bool): Whether indel record represents deletion, None for SNV
     """
 
-    def __init__(self, name, address_a, probe_a, chromosome, pos, snp, ref_strand, assay_type, indel_source_sequence, index):
+    def __init__(self, name, address_a, probe_a, chromosome, pos, snp, ref_strand, assay_type, indel_source_sequence, source_strand, ilmn_strand, genome_reader, index):
         self.name = name
         self.address_a = address_a
         self.probe_a = probe_a
@@ -73,13 +69,28 @@ class BPMRecord(object):
         self.ref_strand = ref_strand
         self.assay_type = assay_type
         self.indel_source_sequence = indel_source_sequence
+        self._genome_reader = genome_reader
         self.index_num = index
-        self.is_deletion = None
-        self._set_plus_strand_alleles()
 
-    def get_plus_strand_probe(self, shorten = False):
-        result = self.probe_a[:-1] if shorten and self.assay_type == 1 else self.probe_a
-        return result if self.ref_strand == RefStrand.Plus else reverse_complement(result)
+        self.plus_strand_alleles = self._determine_plus_strand_alleles(snp, ref_strand)
+
+        if self.indel_source_sequence:
+            source_strand = source_strand[0].upper()
+            ilmn_strand = ilmn_strand[0].upper()
+
+            if source_strand == "U" or ilmn_strand == "U":
+                raise ValueError("Unable to process indel with customer or ILMN strand value of \"U\"")
+
+            if source_strand == "P" or source_strand == "M":
+                assert ilmn_strand == "P" or ilmn_strand == "M"
+            else:
+                assert ilmn_strand == "T" or ilmn_strand == "B"
+
+            self.is_source_on_design_strand = source_strand == ilmn_strand
+            self.is_deletion = self._calculate_is_deletion()
+        else:
+            self.is_source_on_design_strand = None
+            self.is_deletion = None
 
     def is_indel(self):
         """
@@ -93,96 +104,182 @@ class BPMRecord(object):
         """
         return "D" in self.snp
 
-    def _set_plus_strand_alleles(self):
+    def get_indel_source_sequences(self, ref_strand):
+        return self.indel_source_sequence.get_split_sequence(self.is_source_on_design_strand != (self.ref_strand == ref_strand), True)
+
+    def _calculate_is_deletion(self):
+        if self.chromosome == "0" or self.pos == 0:
+            return None
+
+        start_index = self.pos - 1
+        chromosome = "X" if self.chromosome == "XY" else self.chromosome
+
+        # get indel sequence on the plus strand
+        (five_prime, indel_sequence, three_prime) = self.get_indel_source_sequences(RefStrand.Plus)
+
+        genomic_sequence = self._genome_reader.get_reference_bases(chromosome, start_index, start_index + len(indel_sequence))
+        is_deletion = indel_sequence == genomic_sequence
+
+        genomic_sequence = self._genome_reader.get_reference_bases(
+            chromosome, start_index, start_index + len(indel_sequence))
+        assert len(indel_sequence) == len(genomic_sequence)
+        is_deletion = indel_sequence == genomic_sequence
+
+        genomic_deletion_five_prime = self._genome_reader.get_reference_bases(
+            chromosome, start_index - len(five_prime), start_index)
+        genomic_deletion_three_prime = self._genome_reader.get_reference_bases(
+            chromosome, start_index + len(indel_sequence), start_index + len(indel_sequence) + len(three_prime))
+
+        genomic_insertion_five_prime = self._genome_reader.get_reference_bases(
+            chromosome, start_index - len(five_prime) + 1, start_index + 1)
+        genomic_insertion_three_prime = self._genome_reader.get_reference_bases(
+            chromosome, start_index + 1, start_index + len(three_prime) + 1)
+
+        deletion_context = max_suffix_match(genomic_deletion_five_prime, five_prime) + max_prefix_match(genomic_deletion_three_prime, three_prime)
+        insertion_context = max_suffix_match(genomic_insertion_five_prime, five_prime) + max_prefix_match(genomic_insertion_three_prime, three_prime)
+
+        if is_deletion and deletion_context > insertion_context:
+            is_deletion = True
+        elif insertion_context > deletion_context:
+            is_deletion = False
+        else:
+            raise Exception("Unable to determine reference allele for indel")
+        return is_deletion
+
+    def _determine_plus_strand_alleles(self, snp, ref_strand):
         """
-        Set the nucleotides alleles for the record on the plus strand.
-        If record is indel, will set alleles in terms of D/I SNP convention
-        
+        Return the nucleotides alleles for the record on the plus strand.
+        If record is indel, will return alleles in terms of D/I SNP convention
+
         Args:
             None
-        
+
         Returns
             None
-        
+
         Raises:
             Exception - Record does not contains reference strand information
         """
-        nucleotides = [self.snp[1], self.snp[-2]]
-        if self.ref_strand == RefStrand.Plus:
-            self.plus_strand_alleles = nucleotides
-        elif self.ref_strand == RefStrand.Minus:
-            self.plus_strand_alleles = [
+        nucleotides = [snp[1], snp[-2]]
+        if ref_strand == RefStrand.Plus:
+            return nucleotides
+        elif ref_strand == RefStrand.Minus:
+            return [
                 COMPLEMENT_MAP[nucleotide] for nucleotide in nucleotides]
         else:
             raise Exception(
                 "Manifest must contain reference strand information")
-
-    def get_plus_strand_alleles(self):
-        """
-        Get the alleles for this record on the plus strand
-        """
-        return self.plus_strand_alleles
-
 
 class IndelSourceSequence(object):
     """
     Represents the source sequence for an indel
 
     Attributes:
-        five_prime (string) : Ssequence 5' of indel (on the design strand)
+        five_prime (string) : Sequence 5' of indel (on the design strand)
         indel (string) : Indel sequence (on the design strand)
         three_prime (string) : Sequence 3' of indel (on the design strand)
     """
-    def __init__(self, source_sequence, source_strand, ilmn_strand):
-        assert "-" in source_sequence
-        source_sequence = source_sequence.upper()
+    def __init__(self, source_sequence):
+        (self.five_prime, self.indel, self.three_prime) = self.split_source_sequence(source_sequence.upper())
 
-        source_strand = source_strand[0].upper()
-        ilmn_strand = ilmn_strand[0].upper()
-
-        if source_strand == "U" or ilmn_strand == "U":
-            raise ValueError("Unable to process indel with customer or ILMN strand value of \"U\"")
-
-        (five_prime, indel, three_prime) = split_source_sequence(source_sequence)
-
-        if source_strand == "P" or source_strand == "M":
-            assert ilmn_strand == "P" or ilmn_strand == "M"
-        else:
-            assert ilmn_strand == "T" or ilmn_strand == "B"
-
-        if source_strand != ilmn_strand:
-            (self.five_prime, self.indel, self.three_prime) = (reverse_complement(three_prime), reverse_complement(indel), reverse_complement(five_prime))
-        else:
-            (self.five_prime, self.indel, self.three_prime) = (five_prime, indel, three_prime)
-
-    def get_plus_strand_sequence(self, ref_strand):
+    def get_split_sequence(self, generate_reverse_complement, left_shift):
         """
-        Position will be left shifted (five_prime will not end with indel)
+        Return the components of the indel source sequence
+
+        Args:
+            generate_reverse_complement (bool) : Return reverse complement of original source sequence
+            left_shift (bool) : Left shift position of indel on requested strand
+
+        Returns:
+            (five_prime, indel, three_prime) = Sequences of three components of indel source sequence
         """
-        if ref_strand == RefStrand.Plus:
-            (five_prime, indel, three_prime) = (self.five_prime, self.indel, self.three_prime)
-        elif ref_strand == RefStrand.Minus:
+        if generate_reverse_complement:
             (five_prime, indel, three_prime) = (reverse_complement(self.three_prime), reverse_complement(self.indel), reverse_complement(self.five_prime))
         else:
-            raise RuntimeError("Unknown ref_strand value " + ref_strand)
-        
-        while five_prime.endswith(indel):
-            five_prime = five_prime[:-len(indel)]
-            three_prime = indel + three_prime
-        
+            (five_prime, indel, three_prime) = (self.five_prime, self.indel, self.three_prime)
+
+        if left_shift:
+            while five_prime.endswith(indel):
+                five_prime = five_prime[:-len(indel)]
+                three_prime = indel + three_prime
+
         return (five_prime, indel, three_prime)
 
-def split_source_sequence(source_sequence):
+    @staticmethod
+    def split_source_sequence(source_sequence):
+        """
+        Break source sequence into different piecdes
+
+        Args:
+            source_sequence (string): Source sequence string (e.g., ACGT[-/AGA]ATAT)
+
+        Returns:
+            (string, string, string) : Tuple with 5' sequence, indel sequence, 3' sequence
+        """
+        left_position = source_sequence.find("/")
+        right_position = source_sequence.find("]")
+        assert source_sequence[left_position - 1] == "-"
+        return (source_sequence[:(left_position - 2)], source_sequence[(left_position + 1):right_position], source_sequence[(right_position+1):])
+
+DEGENERACY_MAP = {}
+DEGENERACY_MAP["A"] = "A"
+DEGENERACY_MAP["C"] = "C"
+DEGENERACY_MAP["G"] = "G"
+DEGENERACY_MAP["T"] = "T"
+DEGENERACY_MAP["R"] = "AG"
+DEGENERACY_MAP["Y"] = "CT"
+DEGENERACY_MAP["S"] = "GC"
+DEGENERACY_MAP["W"] = "AT"
+DEGENERACY_MAP["K"] = "GT"
+DEGENERACY_MAP["M"] = "AC"
+DEGENERACY_MAP["B"] = "CGT"
+DEGENERACY_MAP["D"] = "AGT"
+DEGENERACY_MAP["H"] = "ACT"
+DEGENERACY_MAP["V"] = "ACG"
+DEGENERACY_MAP["N"] = "ACGT"
+
+def max_suffix_match(str1, str2):
     """
-    Break source sequence into different piecdes
+    Determine the maximum length of exact suffix
+    match between str1 and str2
+
+    str2 may contain degenerate IUPAC characters
 
     Args:
-        source_sequence (string): Source sequence string
+        str1 (string) : First string
+        str2 (string) : Second string
 
     Returns:
-        (string, string, string) : Tuple with 5' sequence, indel sequence, 3' sequence
+        int : Length of maximum suffix match
     """
-    left_position = source_sequence.find("/")
-    right_position = source_sequence.find("]")
-    assert source_sequence[left_position - 1] == "-"
-    return (source_sequence[:(left_position - 2)], source_sequence[(left_position + 1):right_position],source_sequence[(right_position+1):])
+    result = 0
+    for (char1, char2) in zip(str1[::-1], str2[::-1]):
+        assert char1 in "ACGT"
+        if char1 in DEGENERACY_MAP[char2]:
+            result += 1
+        else:
+            break
+    return result
+
+def max_prefix_match(str1, str2):
+    """
+    Determine the maximum length of exact prefix
+    match between str1 and str2
+
+    str2 may contain degenerate IUPAC characters
+
+    Args:
+        str1 (string) : First string
+        str2 (string) : Second string
+
+    Returns:
+        int : Length of maximum prefix match
+    """
+    result = 0
+    for (char1, char2) in zip(str1, str2):
+        assert char1 in "ACGT"
+        if char1 in DEGENERACY_MAP[char2]:
+            result += 1
+        else:
+            break
+    return result

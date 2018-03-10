@@ -1,3 +1,8 @@
+# Next release
+* Enable caching of genomic reference data
+* Enable processing of multiple GTC files for improved performance
+* Address issue with incorrect assignment of reference allele for indels
+
 # 1.0.1 (2017/10/27)
 * Eliminated extraneous header in column
 

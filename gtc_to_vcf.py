@@ -8,7 +8,7 @@ import traceback
 import tempfile
 from vcf.parser import Writer, Reader
 
-from BPMReader import BPMReader, CSVManifestReader
+from BPMReader import BPMReader, CSVManifestReader, ManifestFilter
 from LocusEntryFactory import LocusEntryFactory
 from CallFactory import CallFactory
 from ReferenceGenome import ReferenceGenome, CachedReferenceGenome
@@ -17,7 +17,7 @@ from VcfRecordFactory import VcfRecordFactory
 from ReaderTemplateFactory import ReaderTemplateFactory
 from FormatFactory import FormatFactory
 
-VERSION = "1.0.1"
+VERSION = "1.0.1+dev3"
 
 def is_dir_writable(parent_dir):
     try:
@@ -127,43 +127,35 @@ def read_loci(loci_file):
         yield line.rstrip()
 
 def read_auxiliary_records(auxiliary_loci):
+    """
+    Read auxiliar records from a auxiliary loci file
+
+    Args:
+        auxiliary_loci (string) : Path to VCF file with aux records
+
+    Returns:
+        dict(string, vcf._Record) : Dictionary mapping from record ID to record
+    """
     if auxiliary_loci is not None:
         auxiliary_records = {}
         with open(auxiliary_loci, "rb") as auxiliary_handle:
             for record in Reader(auxiliary_handle):
                 auxiliary_records[record.ID] = record
         return auxiliary_records
-    else:
-        return None
+    return None
 
-def driver(gtc_files, manifest_file, genome_fasta_file, output_vcf_files, skip_indels, expand_identifiers, unsquash_duplicates, auxiliary_loci, loci_file, disable_genome_cache, logger):
-    loci_to_filter = set(read_loci(loci_file)) if loci_file is not None else None
-
-    if manifest_file.lower().endswith(".bpm"):
-        manifest_reader = BPMReader(manifest_file)
-        if not skip_indels:
-            raise Exception("Must skip indel processing (--skip-indels) when using BPM manifest, use CSV manifest to enable indel processing")
-    elif manifest_file.lower().endswith(".csv"):
-        manifest_reader = CSVManifestReader(manifest_file, logger)
-    else:
-        raise Exception("Manifest file must end with .bpm or .csv")
-
-    auxiliary_records = read_auxiliary_records(auxiliary_loci)
-    if disable_genome_cache:
-        genome_reader = ReferenceGenome(genome_fasta_file, logger)
-    else:
-        genome_reader = CachedReferenceGenome(ReferenceGenome(genome_fasta_file, logger), logger)
+def driver(gtc_files, manifest_reader, genome_reader, output_vcf_files, expand_identifiers, unsquash_duplicates, auxiliary_records, logger):
     format_factory = FormatFactory(gtc_files[0] is None, logger)
     reader_template_factory = ReaderTemplateFactory(genome_reader, format_factory, "4.1", "gtc_to_vcf " + VERSION, chrom_sort, logger)
     vcf_record_factory = VcfRecordFactory(format_factory, genome_reader, expand_identifiers, auxiliary_records, logger)
-    locus_entries = LocusEntryFactory(vcf_record_factory, skip_indels, chrom_sort, unsquash_duplicates, logger).create_locus_entries(manifest_reader, loci_to_filter)
+    locus_entries = LocusEntryFactory(vcf_record_factory, chrom_sort, unsquash_duplicates, logger).create_locus_entries(manifest_reader)
 
     for (gtc_file, output_vcf_file) in zip(gtc_files, output_vcf_files):
         if gtc_file:
             logger.info("Handling GTC file " + gtc_file)
             gtc = GenotypeCalls(gtc_file)
-            if os.path.splitext(os.path.basename(gtc.get_snp_manifest()))[0].lower() != os.path.splitext(os.path.basename(manifest_file))[0].lower():
-                logger.warn("Provided manifest name: "+manifest_file+ " and manifest file used to generate GTC file: "+gtc.get_snp_manifest()+" do not match, skipping")
+            if os.path.splitext(os.path.basename(gtc.get_snp_manifest()))[0].lower() != os.path.splitext(os.path.basename(manifest_reader.source_file))[0].lower():
+                logger.warn("Provided manifest name: "+manifest_reader.source_file+ " and manifest file used to generate GTC file: "+gtc.get_snp_manifest()+" do not match, skipping")
                 continue
             logger.info("Manifest file used for GTC conversion identified as: " + gtc.get_snp_manifest())
             sample_name = get_sample_name(gtc, gtc_file)
@@ -186,6 +178,17 @@ def driver(gtc_files, manifest_file, genome_fasta_file, output_vcf_files, skip_i
                 vcf_writer.write_record(entry.vcf_record)
 
 def generate_io_files(gtc_files, output_vcf_path, manifest_file):
+    """
+    Generate input/output files for processing
+
+    Args:
+        gtc_files (list(string)) : List of GTC files to process, may be None
+        output_vcf_path (string) : Path to host output VCF files
+        manifest_file (string) : Path to manifest file
+
+    Returns:
+        (list(string), list(string)) : Paired list of input GTC files and output VCF files. If input gtc_files argument is None, gtc_files will be [None]
+    """
     if not gtc_files:
         gtc_files = [None]
 
@@ -203,6 +206,45 @@ def generate_io_files(gtc_files, output_vcf_path, manifest_file):
         output_vcf_files.append(output_vcf_path)
 
     return (gtc_files, output_vcf_files)
+
+def get_manifest_reader(manifest_file, genome_reader, loci_to_filter, skip_indels, logger):
+    """
+    Create a new manifest reader. Automatically determines type of reader
+    to create based on file extension.
+
+    Args:
+        genome_reader (ReferenceGenome/CachedReferenceGenome) : Provides genome sequence information
+        skip_indels (bool) : Skip processing of indels
+        logger (Logger) : logger
+
+    Returns:
+        BPMReader/CSVManifestReader : The manifest reader
+    """
+    if manifest_file.lower().endswith(".bpm"):
+        if not skip_indels:
+            raise Exception("Must skip indel processing (--skip-indels) when using BPM manifest, use CSV manifest to enable indel processing")
+        manifest_reader = BPMReader(manifest_file)
+    elif manifest_file.lower().endswith(".csv"):
+        manifest_reader = CSVManifestReader(manifest_file, genome_reader, logger)
+    else:
+        raise Exception("Manifest file must end with .bpm or .csv")
+    return ManifestFilter(manifest_reader, loci_to_filter, skip_indels, logger)
+
+def get_genome_reader(genome_fasta_file, disable_genome_cache, logger):
+    """
+    Create a new genome reader
+
+    Args:
+        genome_fasta_file (string) : Path to genomic reference (single fasta)
+        disable_genome_cache (bool) : Disable caching of reference data to save memory
+        logger (Logger) : logger
+
+    Returns:
+        ReferenceGenome/CachedReferenceGenome : The genome reader
+    """
+    if disable_genome_cache:
+        return ReferenceGenome(genome_fasta_file, logger)
+    return CachedReferenceGenome(ReferenceGenome(genome_fasta_file, logger), logger)
 
 def main():
     parser = ArgumentParser(description="Convert GTC file to VCF format")
@@ -233,12 +275,16 @@ def main():
             logger.error(str(error))
         sys.exit(-1)
 
-    (gtc_files, output_vcf_files) = generate_io_files(args.gtc_files, args.output_vcf_path, args.manifest_file)
-
-    if gtc_files[0] is not None:
-        logger.info("Processing %s GTC files", str(len(gtc_files)))
     try:
-        driver(gtc_files, args.manifest_file, args.genome_fasta_file, output_vcf_files, args.skip_indels, args.expand_identifiers, args.unsquash_duplicates, args.auxiliary_loci, args.filter_loci, args.disable_genome_cache, logger)
+        (gtc_files, output_vcf_files) = generate_io_files(args.gtc_files, args.output_vcf_path, args.manifest_file)
+        if gtc_files[0] is not None:
+            logger.info("Processing %s GTC files", str(len(gtc_files)))
+        genome_reader = get_genome_reader(args.genome_fasta_file, args.disable_genome_cache, logger)
+        loci_to_filter = set(read_loci(args.filter_loci)) if args.filter_loci else None
+        manifest_reader = get_manifest_reader(args.manifest_file, genome_reader, loci_to_filter, args.skip_indels, logger)
+        auxiliary_records = read_auxiliary_records(args.auxiliary_loci)
+
+        driver(gtc_files, manifest_reader, genome_reader, output_vcf_files, args.expand_identifiers, args.unsquash_duplicates, auxiliary_records, logger)
     except Exception as exception:
         logger.error(str(exception))
         logger.debug(traceback.format_exc(exception))

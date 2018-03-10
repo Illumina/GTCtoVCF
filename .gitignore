@@ -3,4 +3,4 @@
 *.swp
 bk
 genome
-output
+.vscode/*

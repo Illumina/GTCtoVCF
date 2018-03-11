@@ -203,5 +203,9 @@ class TestCombinedGenotypes(unittest.TestCase):
         self.check_genotype(data, ('-', '-'))
 
 if __name__ == "__main__":
+    reference_file = os.path.join(SCRIPT_DIR, "data", "genome.fa")
+    if not os.path.isfile(reference_file):
+        command = ["bash", os.path.join(SCRIPT_DIR, os.path.pardir, "scripts", "download_reference.sh"), reference_file]
+        call(command)
     unittest.main()
 

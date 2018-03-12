@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 if [[ "$#" -lt 1 ]]
 then
     echo "usage: bash download_reference.sh output.fa [build_id]"

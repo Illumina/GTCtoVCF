@@ -12,19 +12,18 @@ from BPMRecord import BPMRecord
 from IlluminaBeadArrayFiles import RefStrand
 from BPMRecord import IndelSourceSequence
 
-
 class Regression(unittest.TestCase):
     def get_script(self):
         return os.path.join(SCRIPT_DIR, "..", "gtc_to_vcf.py")
-    
+
     def get_genome(self):
         return os.path.join(SCRIPT_DIR, "data", "genome.fa")
-    
+
     def run_regression(self, command, output, expected_output):
         ret_code = call(command)
         self.assertEqual(ret_code, 0)
         self.compare_vcf(output, expected_output)
-    
+
     def compare_vcf(self, output, expected_output):
         self.assertTrue(os.path.isfile(output))
         for (line1, line2) in zip(open(output), open(expected_output)):
@@ -62,15 +61,12 @@ class RegressionGTC(Regression):
         self.run_regression(command, output_vcf, os.path.join(SCRIPT_DIR, "data", "RegressionGTC", "output", "output.vcf"))
         os.remove(output_vcf)
 
-class RegressionGTC(Regression):
+class RegressionAux(Regression):
     def test(self):
         output_vcf = tempfile.mktemp(suffix=".vcf")
         command = [sys.executable, self.get_script(), "--genome-fasta-file", self.get_genome(), "--manifest-file", os.path.join(SCRIPT_DIR, "data", "small_manifest.csv"), "--output-vcf-path", output_vcf, "--auxiliary-loci", os.path.join(SCRIPT_DIR, "data", "RegressionAux", "input", "auxiliary.vcf"), "--disable-genome-cache"]
         self.run_regression(command, output_vcf, os.path.join(SCRIPT_DIR, "data", "RegressionAux", "output", "output.vcf"))
         os.remove(output_vcf)
-
-
-
 
 class TestSourceSequence(unittest.TestCase):
     def test_source_sequence_split(self):
@@ -202,10 +198,12 @@ class TestCombinedGenotypes(unittest.TestCase):
         data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1), 1))
         self.check_genotype(data, ('-', '-'))
 
-if __name__ == "__main__":
+def main():
     reference_file = os.path.join(SCRIPT_DIR, "data", "genome.fa")
     if not os.path.isfile(reference_file):
-        command = ["bash", os.path.join(SCRIPT_DIR, os.path.pardir, "scripts", "download_reference.sh"), reference_file]
-        call(command)
+        download_command = ["bash", os.path.join(SCRIPT_DIR, os.path.pardir, "scripts", "download_reference.sh"), reference_file]
+        call(download_command)
     unittest.main()
 
+if __name__ == "__main__":
+    main()

@@ -1,4 +1,3 @@
-from vcf.model import _Call
 from GenotypeFormat import GenotypeFormat
 from GencallFormat import GencallFormat
 
@@ -14,7 +13,7 @@ class FormatFactory(object):
 
         Args:
             no_samples (bool): True iff no sample data is present (format string should be empty)
-        
+
         Returns:
             FormatFactory
         """

@@ -223,7 +223,7 @@ def get_manifest_reader(manifest_file, genome_reader, loci_to_filter, skip_indel
     if manifest_file.lower().endswith(".bpm"):
         if not skip_indels:
             raise Exception("Must skip indel processing (--skip-indels) when using BPM manifest, use CSV manifest to enable indel processing")
-        manifest_reader = BPMReader(manifest_file)
+        manifest_reader = BPMReader(manifest_file, logger)
     elif manifest_file.lower().endswith(".csv"):
         manifest_reader = CSVManifestReader(manifest_file, genome_reader, logger)
     else:

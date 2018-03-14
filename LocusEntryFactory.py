@@ -36,7 +36,7 @@ class LocusEntryFactory(object):
         result = []
         for record_group in self._group_bpm_records(bpm_reader.get_bpm_records()):
             result.append(self._generate_locus_entry(record_group))
-        return sorted(result, key=lambda entry: (self._chrom_sort_function(entry.vcf_record.CHROM), entry.vcf_record.POS))
+        return sorted(result, key=lambda entry: (self._chrom_sort_function(entry.vcf_record.CHROM), entry.vcf_record.POS, entry.vcf_record.REF))
 
     def _group_bpm_records(self, bpm_records):
         """

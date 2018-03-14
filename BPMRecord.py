@@ -28,7 +28,7 @@ def complement(sequence):
     """
     return "".join(COMPLEMENT_MAP[x] for x in sequence)
 
-def left_shift(five_prime, indel, three_prime):
+def determine_left_shift(five_prime, indel, three_prime):
     """
     Adjust 5' and 3' context of indel such that
     indel is fully shifted to 5'
@@ -37,7 +37,7 @@ def left_shift(five_prime, indel, three_prime):
         five_prime (string) : Five prime sequence
         indel (string) : Sequence of indel
         three_prime (string) : Three prime sequence
-    
+
     Returns:
         (string, string) : New sequence of 5' and 3' sequences
     """
@@ -165,13 +165,13 @@ class BPMRecord(object):
             chromosome, start_index - len(five_prime), start_index)
         genomic_deletion_three_prime = self._genome_reader.get_reference_bases(
             chromosome, start_index + len(indel_sequence), start_index + len(indel_sequence) + len(three_prime))
-        (genomic_deletion_five_prime, genomic_deletion_three_prime) = left_shift(genomic_deletion_five_prime, indel_sequence, genomic_deletion_three_prime)
+        (genomic_deletion_five_prime, genomic_deletion_three_prime) = determine_left_shift(genomic_deletion_five_prime, indel_sequence, genomic_deletion_three_prime)
 
         genomic_insertion_five_prime = self._genome_reader.get_reference_bases(
             chromosome, start_index - len(five_prime) + 1, start_index + 1)
         genomic_insertion_three_prime = self._genome_reader.get_reference_bases(
             chromosome, start_index + 1, start_index + len(three_prime) + 1)
-        (genomic_insertion_five_prime, genomic_insertion_three_prime) = left_shift(genomic_insertion_five_prime, indel_sequence, genomic_insertion_three_prime)
+        (genomic_insertion_five_prime, genomic_insertion_three_prime) = determine_left_shift(genomic_insertion_five_prime, indel_sequence, genomic_insertion_three_prime)
 
         deletion_context_match_lengths = (max_suffix_match(genomic_deletion_five_prime, five_prime), max_prefix_match(genomic_deletion_three_prime, three_prime))
         deletion_context_score = (min(deletion_context_match_lengths), sum(deletion_context_match_lengths))
@@ -240,14 +240,7 @@ class IndelSourceSequence(object):
             (five_prime, indel, three_prime) = (self.five_prime, self.indel, self.three_prime)
 
         if left_shift:
-            while five_prime.endswith(indel):
-                five_prime = five_prime[:-len(indel)]
-                three_prime = indel + three_prime
-            # may have not fully shifted homopolymer
-            while (five_prime[-1] == three_prime[0]) and (len(indel) * five_prime[-1] == indel):
-                five_prime = five_prime[:-1]
-                three_prime = five_prime[-1] + three_prime
-
+            (five_prime, three_prime) = determine_left_shift(five_prime, indel, three_prime)
         return (five_prime, indel, three_prime)
 
     @staticmethod

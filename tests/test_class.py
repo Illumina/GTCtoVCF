@@ -3,6 +3,7 @@ import sys
 import unittest
 import tempfile
 from subprocess import call
+from logging import Logger
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(SCRIPT_DIR, os.pardir))
@@ -90,112 +91,113 @@ class TestCombinedGenotypes(unittest.TestCase):
         self.assertEqual(combiner.combine_genotypes(), expected_genotype)
 
     def test_genotype_combination(self):
+        logger = Logger("test_genotype_combinations")
         # Inf II [A/C] -> AC
         # AC
         data = []
-        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 0, None, None, None, None, 0), 2))
+        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 0, None, None, None, None, 0, logger), 2))
         self.check_genotype(data, ('A', 'C'))
 
         # Inf II [A/C] -> AC
         # Inf II [A/C] -> CC
         # --
         data = []
-        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 0, None, None, None, None, 0), 2))
-        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 0, None, None, None, None, 0), 3))
+        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 0, None, None, None, None, 0, logger), 2))
+        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 0, None, None, None, None, 0, logger), 3))
         self.check_genotype(data, ('-', '-'))
 
         # Inf II [A/C] -> AA
         # AA
         data = []
-        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 0, None, None, None, None, 1), 1))
+        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 0, None, None, None, None, 1, logger), 1))
         self.check_genotype(data, ('A', 'A'))
 
         # Inf II [A/C] -> AC
         # Inf II [A/C] -> NC
         # AC
         data = []
-        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 0, None, None, None, None, 1), 2))
-        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 0, None, None, None, None, 1), 0))
+        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 0, None, None, None, None, 1, logger), 2))
+        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 0, None, None, None, None, 1, logger), 0))
         self.check_genotype(data, ('A', 'C'))
 
         # Inf II [A/C] -> AC
         # Inf I [A/G] -> NC
         # --
         data = []
-        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 0, None, None, None, None, 1), 2))
-        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 1, None, None, None, None, 1), 0))
+        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 0, None, None, None, None, 1, logger), 2))
+        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 1, None, None, None, None, 1, logger), 0))
         self.check_genotype(data, ('-', '-'))
 
         # Inf I [A/C] -> AA
         # Inf I [A/G] -> AG
         # AG
         data = []
-        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 1, None, None, None, None, 1), 1))
-        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 1, None, None, None, None, 1), 2))
+        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 1, None, None, None, None, 1, logger), 1))
+        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 1, None, None, None, None, 1, logger), 2))
         self.check_genotype(data, ('A', 'G'))
 
         # Inf I [A/C] -> AC
         # Inf I [A/G] -> AG
         # --
         data = []
-        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 1, None, None, None, None, 1), 2))
-        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 1, None, None, None, None, 1), 2))
+        data.append((BPMRecord("", None, None, "", 0, "[A/C]", RefStrand.Plus, 1, None, None, None, None, 1, logger), 2))
+        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 1, None, None, None, None, 1, logger), 2))
         self.check_genotype(data, ('-', '-'))
 
         # Inf II [A/G] -> AA
         # Inf I [T/G] -> NC
         # --
         data = []
-        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 0, None, None, None, None, 1), 1))
-        data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1), 0))
+        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 0, None, None, None, None, 1, logger), 1))
+        data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1, logger), 0))
         self.check_genotype(data, ('-', '-'))
 
         # Inf II [A/G] -> AG
         # Inf I [T/G] -> GG
         # AG
         data = []
-        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 0, None, None, None, None, 1), 2))
-        data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1), 3))
+        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 0, None, None, None, None, 1, logger), 2))
+        data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1, logger), 3))
         self.check_genotype(data, ('A', 'G'))
 
         # Inf II [A/G] -> AG
         # Inf I [T/G] -> GG
         # AG
         data = []
-        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 0, None, None, None, None, 1), 2))
-        data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1), 3))
+        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 0, None, None, None, None, 1, logger), 2))
+        data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1, logger), 3))
         self.check_genotype(data, ('A', 'G'))
 
         # Inf II [A/G] -> AA
         # Inf I [T/G] -> TT
         # --
         data = []
-        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 0, None, None, None, None, 1), 1))
-        data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1), 1))
+        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 0, None, None, None, None, 1, logger), 1))
+        data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1, logger), 1))
         self.check_genotype(data, ('-', '-'))
 
         # Inf II [A/G] -> GG
         # Inf I [T/G] -> GG
         # GG
         data = []
-        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 0, None, None, None, None, 1), 3))
-        data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1), 3))
+        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 0, None, None, None, None, 1, logger), 3))
+        data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1, logger), 3))
         self.check_genotype(data, ('G', 'G'))
 
         # Inf II [A/G] -> AG
         # Inf I [T/G] -> TG
         # TG
         data = []
-        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 0, None, None, None, None, 1), 2))
-        data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1), 2))
+        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 0, None, None, None, None, 1, logger), 2))
+        data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1, logger), 2))
         self.check_genotype(data, ('T', 'G'))
 
         # Inf II [A/G] -> AG
         # Inf I [T/G] -> TG
         # TG
         data = []
-        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 0, None, None, None, None, 1), 1))
-        data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1), 1))
+        data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 0, None, None, None, None, 1, logger), 1))
+        data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1, logger), 1))
         self.check_genotype(data, ('-', '-'))
 
 def main():

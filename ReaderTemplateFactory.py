@@ -27,7 +27,7 @@ class ReaderTemplateFactory(object):
         self._logger = logger
 
     def add_format_data(self, reader_template):
-        """ 
+        """
         Query the CallFactory object to get FORMAT info
 
         Args:

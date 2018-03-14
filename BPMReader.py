@@ -36,7 +36,7 @@ class BPMReader(object):
         """
         bpm = self._bpm
         for idx in xrange(len(bpm.addresses)):
-            yield BPMRecord(bpm.names[idx], bpm.addresses[idx], None, bpm.chroms[idx], bpm.map_infos[idx], bpm.snps[idx], bpm.ref_strands[idx], bpm.assay_types[idx], None, None, None, None, idx)
+            yield BPMRecord(bpm.names[idx], bpm.addresses[idx], None, bpm.chroms[idx], bpm.map_infos[idx], bpm.snps[idx], bpm.ref_strands[idx], bpm.assay_types[idx], None, None, None, None, idx, self._logger)
 
 class ManifestFilter(object):
     """

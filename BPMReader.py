@@ -9,18 +9,20 @@ class BPMReader(object):
         source_file (string) : Source file used to create reader
     """
 
-    def __init__(self, bpm_file):
+    def __init__(self, bpm_file, logger):
         """
         Initialize a BPM reader with a file path
 
         Args:
             bpm_file (string): Path to the BPM manifest
+            logger (Logger) : A logger
 
         Returns:
             BeadPoolReader
         """
         self.source_file = bpm_file
         self._bpm = BeadPoolManifest(bpm_file)
+        self._logger = logger
 
     def get_bpm_records(self):
         """
@@ -146,6 +148,6 @@ class CSVManifestReader(object):
 
                 assay_type = 0 if addressb_id == "" else 1
                 try:
-                    yield BPMRecord(name, 0, probe_a, chrom, map_info, snp, RefStrand.from_string(ref_strand), assay_type, indel_source_sequence, source_strand, ilmn_strand, self._genome_reader, idx)
+                    yield BPMRecord(name, 0, probe_a, chrom, map_info, snp, RefStrand.from_string(ref_strand), assay_type, indel_source_sequence, source_strand, ilmn_strand, self._genome_reader, idx, self._logger)
                 except Exception as error:
                     self._logger.warn("Failed to process entry for record %s: %s", name, str(error))

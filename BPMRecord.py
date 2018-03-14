@@ -28,6 +28,28 @@ def complement(sequence):
     """
     return "".join(COMPLEMENT_MAP[x] for x in sequence)
 
+def left_shift(five_prime, indel, three_prime):
+    """
+    Adjust 5' and 3' context of indel such that
+    indel is fully shifted to 5'
+
+    Args:
+        five_prime (string) : Five prime sequence
+        indel (string) : Sequence of indel
+        three_prime (string) : Three prime sequence
+    
+    Returns:
+        (string, string) : New sequence of 5' and 3' sequences
+    """
+    while five_prime.endswith(indel):
+        five_prime = five_prime[:-len(indel)]
+        three_prime = indel + three_prime
+    # may have not fully shifted homopolymer
+    while (five_prime[-1] == three_prime[0]) and (len(indel) * five_prime[-1] == indel):
+        five_prime = five_prime[:-1]
+        three_prime = five_prime[-1] + three_prime
+    return (five_prime, three_prime)
+
 
 def reverse_complement(sequence):
     """
@@ -53,13 +75,31 @@ class BPMRecord(object):
         pos (int): Mapping position
         snp (string): SNP variation (e.g., [A/C])
         ref_strand (RefStrand): Reference strand of snp
-        assay_type (int): 0 for for Inf II, 1 for Inf I
+        assay_type (int): 0 for Inf II, 1 for Inf I
         indel_source_sequence (IndelSourceSequence): Sequence of indel (on design strand), None for SNV
         index_num (int): Index in original manifest
         is_deletion (bool): Whether indel record represents deletion, None for SNV
     """
 
-    def __init__(self, name, address_a, probe_a, chromosome, pos, snp, ref_strand, assay_type, indel_source_sequence, source_strand, ilmn_strand, genome_reader, index):
+    def __init__(self, name, address_a, probe_a, chromosome, pos, snp, ref_strand, assay_type, indel_source_sequence, source_strand, ilmn_strand, genome_reader, index, logger):
+        """
+        Create a new BPM record
+
+        Args:
+            name (string) : Name field from manifest
+            name (string) : AddressA_ID field from manifest
+            probe_a (string) : AlleleA_ProbeSeq field from manifest
+            chromosome (string) : Chr field from manifest
+            pos (string, int) : MapInfo field from manifest
+            ref_strand (RefStrand) : RefStrand from manifest
+            assay_type (int) : 0 for Inf II, 1 for Inf I
+            indel_source_sequence (IndelSourceSequence) : Source sequence for indel, may be None for SNV
+            source_strand (string) : SourceStrand field from manifest
+            ilmn_strand (strinng) : IlmnStrand field from manifest
+            genome_reader (ReferenceGenome,CachedReferenceGenome) : Allows query of genomic sequence, may be None for SNV
+            index (int) : Index of entry within manifest/GTC files
+            logger (Logger) : A logger
+        """
         self.name = name
         self.address_a = address_a
         self.probe_a = probe_a
@@ -71,6 +111,7 @@ class BPMRecord(object):
         self.indel_source_sequence = indel_source_sequence
         self._genome_reader = genome_reader
         self.index_num = index
+        self._logger = logger
 
         self.plus_strand_alleles = self._determine_plus_strand_alleles(snp, ref_strand)
 
@@ -118,31 +159,31 @@ class BPMRecord(object):
         (five_prime, indel_sequence, three_prime) = self.get_indel_source_sequences(RefStrand.Plus)
 
         genomic_sequence = self._genome_reader.get_reference_bases(chromosome, start_index, start_index + len(indel_sequence))
-        is_deletion = indel_sequence == genomic_sequence
-
-        genomic_sequence = self._genome_reader.get_reference_bases(
-            chromosome, start_index, start_index + len(indel_sequence))
-        assert len(indel_sequence) == len(genomic_sequence)
-        is_deletion = indel_sequence == genomic_sequence
+        indel_sequence_match = indel_sequence == genomic_sequence
 
         genomic_deletion_five_prime = self._genome_reader.get_reference_bases(
             chromosome, start_index - len(five_prime), start_index)
         genomic_deletion_three_prime = self._genome_reader.get_reference_bases(
             chromosome, start_index + len(indel_sequence), start_index + len(indel_sequence) + len(three_prime))
+        (genomic_deletion_five_prime, genomic_deletion_three_prime) = left_shift(genomic_deletion_five_prime, indel_sequence, genomic_deletion_three_prime)
 
         genomic_insertion_five_prime = self._genome_reader.get_reference_bases(
             chromosome, start_index - len(five_prime) + 1, start_index + 1)
         genomic_insertion_three_prime = self._genome_reader.get_reference_bases(
             chromosome, start_index + 1, start_index + len(three_prime) + 1)
+        (genomic_insertion_five_prime, genomic_insertion_three_prime) = left_shift(genomic_insertion_five_prime, indel_sequence, genomic_insertion_three_prime)
 
-        deletion_context = max_suffix_match(genomic_deletion_five_prime, five_prime) + max_prefix_match(genomic_deletion_three_prime, three_prime)
-        insertion_context = max_suffix_match(genomic_insertion_five_prime, five_prime) + max_prefix_match(genomic_insertion_three_prime, three_prime)
+        deletion_context_match_lengths = (max_suffix_match(genomic_deletion_five_prime, five_prime), max_prefix_match(genomic_deletion_three_prime, three_prime))
+        deletion_context_score = (min(deletion_context_match_lengths), sum(deletion_context_match_lengths))
 
-        if is_deletion and deletion_context > insertion_context:
-            is_deletion = True
-        elif insertion_context > deletion_context:
-            is_deletion = False
-        else:
+        insertion_context_match_lengths = (max_suffix_match(genomic_insertion_five_prime, five_prime), max_prefix_match(genomic_insertion_three_prime, three_prime))
+        insertion_context_score = (min(insertion_context_match_lengths), sum(insertion_context_match_lengths))
+
+        is_deletion = indel_sequence_match and deletion_context_score > insertion_context_score and deletion_context_score[0] > 2
+
+        is_insertion = insertion_context_score > deletion_context_score and insertion_context_score[0] > 2
+
+        if is_deletion == is_insertion:
             raise Exception("Unable to determine reference allele for indel")
         return is_deletion
 
@@ -202,6 +243,10 @@ class IndelSourceSequence(object):
             while five_prime.endswith(indel):
                 five_prime = five_prime[:-len(indel)]
                 three_prime = indel + three_prime
+            # may have not fully shifted homopolymer
+            while (five_prime[-1] == three_prime[0]) and (len(indel) * five_prime[-1] == indel):
+                five_prime = five_prime[:-1]
+                three_prime = five_prime[-1] + three_prime
 
         return (five_prime, indel, three_prime)
 

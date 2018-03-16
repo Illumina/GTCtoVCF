@@ -1,6 +1,7 @@
 from IlluminaBeadArrayFiles import RefStrand
 
 COMPLEMENT_MAP = dict(zip("ABCDGHKMRTVYNID", "TVGHCDMKYABRNID"))
+REQUIRED_INDEL_CONTEXT_LENGTH = 3
 
 def reverse(sequence):
     """
@@ -179,9 +180,9 @@ class BPMRecord(object):
         insertion_context_match_lengths = (max_suffix_match(genomic_insertion_five_prime, five_prime), max_prefix_match(genomic_insertion_three_prime, three_prime))
         insertion_context_score = (min(insertion_context_match_lengths), sum(insertion_context_match_lengths))
 
-        is_deletion = indel_sequence_match and deletion_context_score > insertion_context_score and deletion_context_score[0] > 2
+        is_deletion = indel_sequence_match and deletion_context_score > insertion_context_score and deletion_context_score[0] >= REQUIRED_INDEL_CONTEXT_LENGTH
 
-        is_insertion = insertion_context_score > deletion_context_score and insertion_context_score[0] > 2
+        is_insertion = insertion_context_score > deletion_context_score and insertion_context_score[0] >= REQUIRED_INDEL_CONTEXT_LENGTH
 
         if is_deletion == is_insertion:
             raise Exception("Unable to determine reference allele for indel")

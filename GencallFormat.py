@@ -15,7 +15,7 @@ class GencallFormat(object):
 
         Returns
             GencallFormat
-        """ 
+        """
         self._logger = logger
         self._gencall_scores = gencall_scores
 

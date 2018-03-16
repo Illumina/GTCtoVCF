@@ -91,7 +91,7 @@ class CachedReferenceGenome(object):
     Attributes:
         genome_fasta_file (string): Path to reference genome file
     """
-    def __init__(self, reference_genome, logger): 
+    def __init__(self, reference_genome, logger):
         self._logger = logger
         self._logger.info("Caching reference data")
         self._cache = CachedReferenceGenome.generate_genome_cache(reference_genome)
@@ -108,11 +108,11 @@ class CachedReferenceGenome(object):
 
         Returns:
             dict(string,string): A dictionary that maps from contig name to bases for that contig
-        """        
+        """
         result = {}
         for (contig, contig_length) in reference_genome.get_contig_lengths():
             result[contig] = reference_genome.get_reference_bases(contig, 0, contig_length)
-        return result 
+        return result
 
     def get_contig_lengths(self):
         """

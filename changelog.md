@@ -1,6 +1,6 @@
 # Next release
 * Enable caching of genomic reference data
-* Enable processing of multiple GTC files for improved performance
+* Enable processing of multiple GTC files or directories for improved performance
 * Address issue with incorrect assignment of reference allele for indels
 * Added script to build reference FASTA files for human
 

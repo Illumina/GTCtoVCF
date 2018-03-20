@@ -2,7 +2,7 @@
 
 ## Usage
 ```none
-usage: gtc_to_vcf.py [-h] [--gtc-files GTC_FILES [GTC_FILES ...]]
+usage: gtc_to_vcf.py [-h] [--gtc-paths GTC_PATHS [GTC_PATHS ...]]
                      --manifest-file MANIFEST_FILE --genome-fasta-file
                      GENOME_FASTA_FILE [--output-vcf-path OUTPUT_VCF_PATH]
                      [--skip-indels] [--log-file LOG_FILE]
@@ -15,8 +15,8 @@ Convert GTC file to VCF format
 
 optional arguments:
   -h, --help            show this help message and exit
-  --gtc-files GTC_FILES [GTC_FILES ...]
-                        One or more GTC files to process (optional)
+  --gtc-paths GTC_PATHS [GTC_PATHS ...]
+                        One or more GTC files or directories to process (optional)
   --manifest-file MANIFEST_FILE
                         Bead pool manifest for product (*.csv or *.bpm)
   --genome-fasta-file GENOME_FASTA_FILE
@@ -43,16 +43,16 @@ optional arguments:
 ```
 ## Input details
 ### Input and output files
-Input GTC files are specified with the --gtc-files option. One or more GTC files may be specified with this option. There is a performance benefit to analyzing multiple GTC files in a single invocation of the program, as it minimizes the IO overhead of reading manifest and genome reference data to memory. When multiple input GTC files are specified, a single VCF file is produced for each input GTC file, as opposed to a single multi-sample VCF file. When no GTC file is provided, the program will still produce an output VCF file without sample genotyping information.
+Input GTC files are specified with the --gtc-paths option. One or more paths may be specified with this option. If a given path corresponds to a directory, the script will identify all GTC files within that directory for processing. A combination of file and directory paths may be specified. There is a performance benefit to analyzing multiple GTC files in a single invocation of the program, as it minimizes the IO overhead of reading manifest and genome reference data to memory. When multiple input GTC files are specified, a single VCF file is produced for each input GTC file, as opposed to a single multi-sample VCF file. When no GTC file is provided, the program will still produce an output VCF file without sample genotyping information.
 
 The --output-vcf-path option may either be a file or directory. If the argument is a directory, the program will automatically determine an appropriate name for the VCF output file created within that directory. The behavior is summarized in the following table
 
-| --gtc-files | --vcf-output-path | Behavior | 
+| # GTC files | --vcf-output-path | Behavior | 
 | - | - | - | 
-| n/a | directory  | VCF filename determined from manifest filename  |
+| 0 | directory  | VCF filename determined from manifest filename  |
 | 1 | directory  | VCF filename determined from input GTC file  |
 | 2+ | directory  | VCF filenames determined from input GTC files  |
-| n/a | file  | VCF filename determined from --vcf-output-path argument  |
+| 0 | file  | VCF filename determined from --vcf-output-path argument  |
 | 1 | file  | VCF filename determined from --vcf-output-path argument  |
 | 2+ | file  | Error |
 

@@ -2,6 +2,7 @@ import os
 import sys
 import unittest
 import tempfile
+import shutil
 from subprocess import call
 from logging import Logger
 
@@ -58,9 +59,17 @@ class RegressionLociFilter(Regression):
 class RegressionGTC(Regression):
     def test(self):
         output_vcf = tempfile.mktemp(suffix=".vcf")
-        command = [sys.executable, self.get_script(), "--genome-fasta-file", self.get_genome(), "--manifest-file", os.path.join(SCRIPT_DIR, "data", "small_manifest.csv"), "--gtc-files", os.path.join(SCRIPT_DIR, "data", "RegressionGTC", "input", "201142750001_R01C01.gtc"), "--output-vcf-path", output_vcf, "--disable-genome-cache"]
+        command = [sys.executable, self.get_script(), "--genome-fasta-file", self.get_genome(), "--manifest-file", os.path.join(SCRIPT_DIR, "data", "small_manifest.csv"), "--gtc-paths", os.path.join(SCRIPT_DIR, "data", "RegressionGTC", "input", "201142750001_R01C01.gtc"), "--output-vcf-path", output_vcf, "--disable-genome-cache"]
         self.run_regression(command, output_vcf, os.path.join(SCRIPT_DIR, "data", "RegressionGTC", "output", "output.vcf"))
         os.remove(output_vcf)
+
+class RegressionGTCDirectory(Regression):
+    def test(self):
+        output_vcf_dir = tempfile.mkdtemp()
+        command = [sys.executable, self.get_script(), "--genome-fasta-file", self.get_genome(), "--manifest-file", os.path.join(SCRIPT_DIR, "data", "small_manifest.csv"), "--gtc-paths", os.path.join(SCRIPT_DIR, "data", "RegressionGTCDirectory", "input"), "--output-vcf-path", output_vcf_dir, "--disable-genome-cache"]
+        self.run_regression(command, os.path.join(output_vcf_dir, "201142750001_R01C01.vcf"), os.path.join(SCRIPT_DIR, "data", "RegressionGTCDirectory", "output", "201142750001_R01C01.vcf"))
+        self.run_regression(command, os.path.join(output_vcf_dir, "201142750001_R01C02.vcf"), os.path.join(SCRIPT_DIR, "data", "RegressionGTCDirectory", "output", "201142750001_R01C02.vcf"))
+        shutil.rmtree(output_vcf_dir)
 
 class RegressionAux(Regression):
     def test(self):

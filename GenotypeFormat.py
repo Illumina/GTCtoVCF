@@ -4,7 +4,6 @@ from IlluminaBeadArrayFiles import code2genotype
 
 CHANNEL_MAP = {"A": "T", "T": "A", "C": "G", "G": "C"}
 
-
 def get_expected_ploidy(gender, chrom):
     """
     Determine expected ploidy of call based on sample's gender and chromosome. Unknown genders are processed as diploid.
@@ -28,7 +27,7 @@ def format_vcf_genotype(vcf_allele1_char, vcf_allele2_char, ploidy):
         vcf_allele1_char (string): 0,1,2 etc.
         vcf_allele2_char (string): 0,1,2, etc.
         vcf_record (vcf._Record): Record for the entry analyzed
-        ploidy(int): Expected ploidy. 
+        ploidy(int): Expected ploidy.
 
     Returns
         string: String representation of genotype (e.g., "0/1"), adjusted for haploid calls if applicable
@@ -77,7 +76,7 @@ def convert_indel_genotype_to_vcf(nucleotide_genotypes, vcf_record, is_deletion,
     Returns:
         string: VCF genotype (e.g, "0/1")
     """
-    if len(nucleotide_genotypes) == 0:
+    if not nucleotide_genotypes:
         return format_vcf_genotype(".", ".", ploidy)
 
     if len(nucleotide_genotypes) > 1:
@@ -164,7 +163,7 @@ class RecordCombiner(object):
         """
         alleles = set()
         for record in self._bpm_records:
-            alleles.update(record.get_plus_strand_alleles())
+            alleles.update(record.plus_strand_alleles)
         return list(combinations_with_replacement(alleles, 2))
 
     def _record_inconsistent_with_genotype(self, record, genotype):
@@ -183,7 +182,7 @@ class RecordCombiner(object):
         if record_int_genotype == 0:
             return False
 
-        plus_strand_alleles = record.get_plus_strand_alleles()
+        plus_strand_alleles = record.plus_strand_alleles
         record_plus_genotype = convert_ab_genotype_to_nucleotide(
             record_int_genotype, plus_strand_alleles)
 
@@ -269,25 +268,29 @@ class RecordCombiner(object):
         return ",".join(sorted(record_names))
 
 
-class GenotypeGenerator(object):
+class GenotypeFormat(object):
     """
-    Generate GQ format information for VCF
-
-    Attributes:
-        id_string (string): "GT"
-        description (string): "Genotype"
+    Generate GT format information for VCF
     """
     def __init__(self, logger, gender, genotypes):
-        self.id_string = "GT"
-        self.description = "Genotype"
-        self.format_obj = _Format(
-            self.id_string, 1, "String", self.description)
         self._gender = gender
         self._genotypes = genotypes
         self._logger = logger
 
+    @staticmethod
+    def get_id():
+        return "GT"
+
+    @staticmethod
+    def get_description():
+        return "Genotype"
+
+    @staticmethod
+    def get_format_obj():
+        return _Format(GenotypeFormat.get_id(), 1, "String", GenotypeFormat.get_description())
+
     def generate_sample_format_info(self, bpm_records, vcf_record, sample_name):
-        """ 
+        """
         Get the sample genotype
 
         Args:
@@ -308,7 +311,7 @@ class GenotypeGenerator(object):
                 int_genotype = self._genotypes[record.index_num]
                 if int_genotype != 0:
                     nucleotide_genotypes.append(convert_ab_genotype_to_nucleotide(
-                        int_genotype, bpm_records[0].get_plus_strand_alleles()))
+                        int_genotype, bpm_records[0].plus_strand_alleles))
             vcf_genotype = convert_indel_genotype_to_vcf(
                 nucleotide_genotypes, vcf_record, bpm_records[0].is_deletion, ploidy)
         else:
@@ -325,7 +328,7 @@ class GenotypeGenerator(object):
                     nucleotide_genotype = ('-', '-')
                 else:
                     nucleotide_genotype = convert_ab_genotype_to_nucleotide(
-                        sample_genotype, bpm_records[0].get_plus_strand_alleles())
+                        sample_genotype, bpm_records[0].plus_strand_alleles)
                 vcf_genotype = convert_nucleotide_genotype_to_vcf(
                     nucleotide_genotype, vcf_record, ploidy)
 

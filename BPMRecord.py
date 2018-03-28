@@ -46,11 +46,10 @@ def determine_left_shift(five_prime, indel, three_prime):
         five_prime = five_prime[:-len(indel)]
         three_prime = indel + three_prime
     # may have not fully shifted homopolymer
-    while (five_prime[-1] == three_prime[0]) and (len(indel) * five_prime[-1] == indel):
-        five_prime = five_prime[:-1]
+    while len(indel) * five_prime[-1] == indel:
         three_prime = five_prime[-1] + three_prime
+        five_prime = five_prime[:-1]
     return (five_prime, three_prime)
-
 
 def reverse_complement(sequence):
     """
@@ -175,17 +174,28 @@ class BPMRecord(object):
         (genomic_insertion_five_prime, genomic_insertion_three_prime) = determine_left_shift(genomic_insertion_five_prime, indel_sequence, genomic_insertion_three_prime)
 
         deletion_context_match_lengths = (max_suffix_match(genomic_deletion_five_prime, five_prime), max_prefix_match(genomic_deletion_three_prime, three_prime))
-        deletion_context_score = (min(deletion_context_match_lengths), sum(deletion_context_match_lengths))
+        max_deletion_context = min(len(genomic_deletion_five_prime), len(five_prime)) + min(len(genomic_deletion_three_prime), len(three_prime)) + len(indel_sequence)
+        deletion_context_score = (sum(deletion_context_match_lengths) + len(indel_sequence) if indel_sequence_match else 0)/float(max_deletion_context)
 
         insertion_context_match_lengths = (max_suffix_match(genomic_insertion_five_prime, five_prime), max_prefix_match(genomic_insertion_three_prime, three_prime))
-        insertion_context_score = (min(insertion_context_match_lengths), sum(insertion_context_match_lengths))
+        max_insertion_context = min(len(genomic_insertion_five_prime), len(five_prime)) + min(len(genomic_insertion_three_prime), len(three_prime))
+        insertion_context_score = sum(insertion_context_match_lengths)/float(max_insertion_context)
 
-        is_deletion = indel_sequence_match and deletion_context_score > insertion_context_score and deletion_context_score[0] >= REQUIRED_INDEL_CONTEXT_LENGTH
+        is_deletion = indel_sequence_match and deletion_context_score > insertion_context_score and min(deletion_context_match_lengths) >= 1
 
-        is_insertion = insertion_context_score > deletion_context_score and insertion_context_score[0] >= REQUIRED_INDEL_CONTEXT_LENGTH
+        is_insertion = insertion_context_score > deletion_context_score and min(insertion_context_match_lengths) >= 1
 
         if is_deletion == is_insertion:
             raise Exception("Unable to determine reference allele for indel")
+
+        if is_deletion:
+            if deletion_context_score < 1.0:
+                self._logger.warn("Incomplete match of source sequence to genome for indel " + self.name)
+        
+        if is_insertion:
+            if insertion_context_score < 1.0:
+                self._logger.warn("Incomplete match of source sequence to genome for indel " + self.name)
+
         return is_deletion
 
     def _determine_plus_strand_alleles(self, snp, ref_strand):

@@ -1,3 +1,6 @@
+* Output warning if any mismatch to reference genome in indel source sequence
+* Count length of indel when scoring deletion reference allele
+
 # 1.1.0 (2018/03/20)
 * Enable caching of genomic reference data
 * Enable processing of multiple GTC files or directories for improved performance

@@ -12,7 +12,7 @@ sys.path.append(os.path.join(SCRIPT_DIR, os.pardir))
 from GenotypeFormat import RecordCombiner
 from BPMRecord import BPMRecord
 from IlluminaBeadArrayFiles import RefStrand
-from BPMRecord import IndelSourceSequence
+from BPMRecord import IndelSourceSequence, determine_left_shift
 
 class Regression(unittest.TestCase):
     def get_script(self):
@@ -89,6 +89,10 @@ class TestSourceSequence(unittest.TestCase):
         self.assertEqual(five_prime, "")
         self.assertEqual(indel, "ATAT")
         self.assertEqual(three_prime, "")
+
+        self.assertEqual(determine_left_shift("AACAA", "A", "GGG"), ("AAC", "AAGGG"))
+        self.assertEqual(determine_left_shift("AACAA", "AAA", "GGG"), ("AAC", "AAGGG"))
+        self.assertEqual(determine_left_shift("AACAA", "AAA", "AGGG"), ("AAC", "AAAGGG"))
 
 class TestCombinedGenotypes(unittest.TestCase):
     def check_genotype(self, data, expected_genotype):

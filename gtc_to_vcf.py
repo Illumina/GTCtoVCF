@@ -17,7 +17,7 @@ from VcfRecordFactory import VcfRecordFactory
 from ReaderTemplateFactory import ReaderTemplateFactory
 from FormatFactory import FormatFactory
 
-VERSION = "1.1.0"
+VERSION = "1.1.1"
 
 def is_dir_writable(parent_dir):
     try:

@@ -1,3 +1,4 @@
+# 1.1.1 (2018/03/27)
 * Output warning if any mismatch to reference genome in indel source sequence
 * Count length of indel when scoring deletion reference allele
 

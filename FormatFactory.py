@@ -1,5 +1,7 @@
 from GenotypeFormat import GenotypeFormat
 from GencallFormat import GencallFormat
+from ThetaFormat import ThetaFormat
+from BAlleleFreqFormat import BAlleleFreqFormat
 
 class FormatFactory(object):
     """FormatFactory is responsible for determining the fields
@@ -22,6 +24,8 @@ class FormatFactory(object):
         if not no_samples:
             self._format_classes.append(GenotypeFormat)
             self._format_classes.append(GencallFormat)
+            self._format_classes.append(ThetaFormat)
+            self._format_classes.append(BAlleleFreqFormat)
 
     def get_format_id_string(self):
         """
@@ -74,4 +78,9 @@ class FormatFactory(object):
             self._logger, gtc.get_gender(), gtc.get_genotypes()))
         result.append(GencallFormat(
             self._logger, gtc.get_genotype_scores()))
+        # TODO: figure out how to get Theta value (.get_call_rate is just placeholder)
+        result.append(ThetaFormat(
+            self._logger, gtc.get_call_rate()))
+        result.append(BAlleleFreqFormat(
+            self._logger, gtc.get_ballele_freqs()))
         return result

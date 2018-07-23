@@ -2,6 +2,8 @@ from GenotypeFormat import GenotypeFormat
 from GencallFormat import GencallFormat
 from ThetaFormat import ThetaFormat
 from BAlleleFreqFormat import BAlleleFreqFormat
+from LogRRatioFormat import LogRRatioFormat
+
 
 class FormatFactory(object):
     """FormatFactory is responsible for determining the fields
@@ -9,23 +11,31 @@ class FormatFactory(object):
     the appropriate corresponding format objects
     """
 
-    def __init__(self, no_samples, logger):
+    def __init__(self, no_samples, formats_to_include, logger):
         """
         Create a new FormatFactory
 
         Args:
             no_samples (bool): True iff no sample data is present (format string should be empty)
+            formats_to_include list(String): list of FORMAT IDs to include (default: GT,GC)
 
         Returns:
             FormatFactory
         """
         self._logger = logger
         self._format_classes = []
+        self._formats_to_include = formats_to_include
         if not no_samples:
-            self._format_classes.append(GenotypeFormat)
-            self._format_classes.append(GencallFormat)
-            self._format_classes.append(ThetaFormat)
-            self._format_classes.append(BAlleleFreqFormat)
+            if GenotypeFormat.get_id() in formats_to_include:
+                self._format_classes.append(GenotypeFormat)
+            if GencallFormat.get_id() in formats_to_include:
+                self._format_classes.append(GencallFormat)
+            if ThetaFormat.get_id() in formats_to_include:
+                self._format_classes.append(ThetaFormat)
+            if BAlleleFreqFormat.get_id() in formats_to_include:
+                self._format_classes.append(BAlleleFreqFormat)
+            if LogRRatioFormat.get_id() in formats_to_include:
+                self._format_classes.append(LogRRatioFormat)
 
     def get_format_id_string(self):
         """
@@ -74,13 +84,21 @@ class FormatFactory(object):
             None
         """
         result = []
-        result.append(GenotypeFormat(
-            self._logger, gtc.get_gender(), gtc.get_genotypes()))
-        result.append(GencallFormat(
-            self._logger, gtc.get_genotype_scores()))
-        # TODO: figure out how to get Theta value (.get_call_rate is just placeholder)
-        result.append(ThetaFormat(
-            self._logger, gtc.get_call_rate()))
-        result.append(BAlleleFreqFormat(
-            self._logger, gtc.get_ballele_freqs()))
+        # only append if ID is in command line args
+        if GenotypeFormat.get_id() in self._formats_to_include:
+            result.append(GenotypeFormat(
+                self._logger, gtc.get_gender(), gtc.get_genotypes()))
+        if GencallFormat.get_id() in self._formats_to_include:
+            result.append(GencallFormat(
+                self._logger, gtc.get_genotype_scores()))
+        if ThetaFormat.get_id() in self._formats_to_include:
+            result.append(ThetaFormat(
+                self._logger, gtc))
+        if BAlleleFreqFormat.get_id() in self._formats_to_include:
+            result.append(BAlleleFreqFormat(
+                self._logger, gtc.get_ballele_freqs()))
+        if LogRRatioFormat.get_id() in self._formats_to_include:
+            result.append(LogRRatioFormat(
+                self._logger, gtc.get_logr_ratios()))
+
         return result

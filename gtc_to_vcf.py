@@ -63,11 +63,11 @@ def verify_inputs(args):
     errors += check_input_file(args.manifest_file, 'manifest', ['.bpm', '.csv'])
     errors += check_input_file(args.genome_fasta_file, 'genome reference', [])
 
-    if os.path.isdir(args.output_vcf_path):
+    if args.output_vcf_path and os.path.isdir(args.output_vcf_path):
         if not is_dir_writable(args.output_vcf_path):
             errors.append("Output directory " + args.output_vcf_path + " is not writeable")
     else:
-        if not is_file_writable(args.output_vcf_path):
+        if args.output_vcf_path and os.path.isfile(args.output_vcf_path) and not is_file_writable(args.output_vcf_path):
             errors.append("Unable to write to output file " + args.output_vcf_path)
 
     return errors
@@ -165,16 +165,16 @@ def driver(gtc_files, manifest_reader, genome_reader, output_vcf_files, expand_i
             logger.info("GTC file not provided")
             reader_template = reader_template_factory.create_reader_template([])
 
-        output_vcf_file = os.path.abspath(output_vcf_file)
-        output_vcf_file_temp = tempfile.mktemp(dir=os.path.dirname(output_vcf_file), suffix=".vcf")
-        with open(output_vcf_file_temp, "w") as output_handle:
+        output_vcf_file_temp = tempfile.mktemp(dir=os.path.dirname(output_vcf_file), suffix=".vcf") if output_vcf_file else None
+        with open(output_vcf_file_temp, "w") if output_vcf_file_temp else sys.stdout as output_handle:
             vcf_writer = Writer(output_handle, reader_template)
             for entry in locus_entries:
                 if not entry.vcf_record:
                     logger.warn("Could not create record for: "+entry.bpm_records[0].name)
                     continue
                 vcf_writer.write_record(entry.vcf_record)
-        os.rename(output_vcf_file_temp, output_vcf_file)
+        if output_vcf_file and output_vcf_file_temp:
+            os.rename(output_vcf_file_temp, output_vcf_file)
 
 def get_files_for_directory(input_directory, ext):
     """
@@ -219,7 +219,11 @@ def generate_io_files(gtc_paths, output_vcf_path, manifest_file):
     else:
         gtc_paths = [None]
 
-    if os.path.isdir(output_vcf_path):
+    if not output_vcf_path:
+        output_vcf_files = [None]
+        if len(gtc_paths) > 1:
+            raise Exception("Must specify output directory when providing more than one input GTC file")
+    elif os.path.isdir(output_vcf_path):
         if gtc_paths[0] is None:
             output_vcf_files = [os.path.join(output_vcf_path, os.path.splitext(os.path.basename(manifest_file))[0] + ".vcf")]
         else:
@@ -229,7 +233,7 @@ def generate_io_files(gtc_paths, output_vcf_path, manifest_file):
     else:
         output_vcf_files = []
         if len(gtc_paths) > 1:
-            raise Exception("Must specify output directory (not file) when providing more than one input GTC file")
+            raise Exception("Must specify output directory when providing more than one input GTC file")
         output_vcf_files.append(output_vcf_path)
 
     return (gtc_paths, output_vcf_files)
@@ -278,7 +282,7 @@ def main():
     parser.add_argument("--gtc-paths", dest="gtc_paths", nargs="+", required=False, help="One or more GTC files to process (optional)")
     parser.add_argument("--manifest-file", dest="manifest_file", required=True, help="Bead pool manifest for product (*.csv or *.bpm)")
     parser.add_argument("--genome-fasta-file", dest="genome_fasta_file", required=True, help="Reference genome in fasta format")
-    parser.add_argument("--output-vcf-path", dest="output_vcf_path", default="output.vcf", required=False, help="Path for generation of VCF output (default is output.vcf)")
+    parser.add_argument("--output-vcf-path", dest="output_vcf_path", default=None, required=False, help="Path for generation of VCF output (default is None => output to standard output)")
     parser.add_argument("--skip-indels", dest="skip_indels", action="store_true", default=False, help="Skip processing of indels (default is False)")
     parser.add_argument("--log-file", dest="log_file", default=None, required=False, help="File to write logging information (optional)")
     parser.add_argument("--expand-identifiers", dest="expand_identifiers", action="store_true", default=False, help="For VCF entries with multiple corresponding manifest entries, list all manifest identifiers in VCF ID field")
@@ -289,7 +293,7 @@ def main():
     parser.add_argument("--version", action="version", version='%(prog)s ' + VERSION)
     args = parser.parse_args()
 
-    args.output_vcf_path = os.path.abspath(args.output_vcf_path)
+    args.output_vcf_path = os.path.abspath(args.output_vcf_path) if args.output_vcf_path else None
     args.manifest_file = os.path.abspath(args.manifest_file)
     args.genome_fasta_file = os.path.abspath(args.genome_fasta_file)
 

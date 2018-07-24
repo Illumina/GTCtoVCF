@@ -22,8 +22,8 @@ optional arguments:
   --genome-fasta-file GENOME_FASTA_FILE
                         Reference genome in fasta format
   --output-vcf-path OUTPUT_VCF_PATH
-                        Path for generation of VCF output (default is
-                        output.vcf)
+                        Path for generation of VCF output (default is None => 
+                        output to standard output)
   --skip-indels         Skip processing of indels (default is False)
   --log-file LOG_FILE   File to write logging information (optional)
   --expand-identifiers  For VCF entries with multiple corresponding manifest
@@ -55,6 +55,9 @@ The --output-vcf-path option may either be a file or directory. If the argument 
 | 0 | file  | VCF filename determined from --vcf-output-path argument  |
 | 1 | file  | VCF filename determined from --vcf-output-path argument  |
 | 2+ | file  | Error |
+| 0 | None  | Ouptut to standard output  |
+| 1 | None  | Output to standard output  |
+| 2+ | None  | Error |
 
 ### Manifests
 The supplied manifest file may either be in CSV or BPM format; however, a CSV format manifest is required to generate indel records in the output VCF. When running the converter with a BPM manifest, indel processing must be explicitly disabled with the "--skip-indels" option. In either case, the manifest must provide RefStrand annotations. The GTC to VCF converter depends on the presence of accurate mapping information within the manifest, and may produce inaccurate results if the mapping information is incorrect. Mapping information should follow the implicit dbSNP standard, where

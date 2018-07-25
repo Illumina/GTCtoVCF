@@ -49,6 +49,16 @@ class RegressionCSV(Regression):
         self.run_regression(command, output_vcf, os.path.join(SCRIPT_DIR, "data", "RegressionCSV", "output", "output.vcf"))
         os.remove(output_vcf)
 
+class RegressionStdOut(Regression):
+    def test(self):
+        output_vcf = tempfile.mktemp(suffix=".vcf")
+        command = [sys.executable, self.get_script(), "--genome-fasta-file", self.get_genome(), "--manifest-file", os.path.join(SCRIPT_DIR, "data", "small_manifest.csv"), "--disable-genome-cache"]
+        with open(output_vcf, "w") as output_handle:
+            ret_code = call(command, stdout = output_handle)
+            self.assertEqual(ret_code, 0)
+            self.compare_vcf(output_vcf, os.path.join(SCRIPT_DIR, "data", "RegressionStdOut", "output", "output.vcf"))
+        os.remove(output_vcf)
+
 class RegressionLociFilter(Regression):
     def test(self):
         output_vcf = tempfile.mktemp(suffix=".vcf")

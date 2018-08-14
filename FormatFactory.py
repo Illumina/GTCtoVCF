@@ -29,8 +29,6 @@ class FormatFactory(object):
                 self._format_classes.append(GenotypeFormat)
             if GencallFormat.get_id() in formats_to_include:
                 self._format_classes.append(GencallFormat)
-            if ThetaFormat.get_id() in formats_to_include:
-                self._format_classes.append(ThetaFormat)
             if BAlleleFreqFormat.get_id() in formats_to_include:
                 self._format_classes.append(BAlleleFreqFormat)
             if LogRRatioFormat.get_id() in formats_to_include:
@@ -90,9 +88,6 @@ class FormatFactory(object):
         if GencallFormat.get_id() in self._formats_to_include:
             result.append(GencallFormat(
                 self._logger, gtc.get_genotype_scores()))
-        if ThetaFormat.get_id() in self._formats_to_include:
-            result.append(ThetaFormat(
-                self._logger, gtc))
         if BAlleleFreqFormat.get_id() in self._formats_to_include:
             result.append(BAlleleFreqFormat(
                 self._logger, gtc.get_ballele_freqs()))

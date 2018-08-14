@@ -1,6 +1,5 @@
 from GenotypeFormat import GenotypeFormat
 from GencallFormat import GencallFormat
-from ThetaFormat import ThetaFormat
 from BAlleleFreqFormat import BAlleleFreqFormat
 from LogRRatioFormat import LogRRatioFormat
 

@@ -38,7 +38,7 @@ optional arguments:
                         input manifest (optional)
   --disable-genome-cache
                         Disable caching of genome reference data
-  --include-attributes [{TH,BAF,LRR} [{TH,BAF,LRR} ...]]
+  --include-attributes [{BAF,LRR} [{BAF,LRR} ...]]
                         Additional attributes to include in VCF FORMAT output
                         (optional)
   --version             show program's version number and exit

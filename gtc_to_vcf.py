@@ -280,20 +280,13 @@ def main():
     parser.add_argument("--auxiliary-loci", dest="auxiliary_loci", default=None, required=False, help="VCF file with auxiliary definitions of loci (optional)")
     parser.add_argument("--filter-loci", dest="filter_loci", default=None, required=False, help="File containing list of loci names to filter from input manifest (optional)")
     parser.add_argument("--disable-genome-cache", dest="disable_genome_cache", default=False, action="store_true", help="Disable caching of genome reference data")
-    parser.add_argument("--include-attributes", dest="include_attributes", default=[], choices=["BAF","LRR"], nargs="*", help="Additional attributes to include in VCF FORMAT output (optional)")
+    parser.add_argument("--include-attributes", dest="include_attributes", default=["GT", "GQ"], choices=FormatFactory.get_possible_formats(), nargs="*", help="Additional attributes to include in VCF FORMAT output (optional)")
     parser.add_argument("--version", action="version", version='%(prog)s ' + VERSION)
     args = parser.parse_args()
 
     args.output_vcf_path = os.path.abspath(args.output_vcf_path)
     args.manifest_file = os.path.abspath(args.manifest_file)
     args.genome_fasta_file = os.path.abspath(args.genome_fasta_file)
-
-    if args.include_attributes is None:
-        args.include_attributes = ["GT", "GQ"]
-    else:
-        args.include_attributes.append("GT")
-        args.include_attributes.append("GQ")
-    print "Attrs:", args.include_attributes
 
     logger = get_logger()
     add_file_logger(logger, args.log_file)

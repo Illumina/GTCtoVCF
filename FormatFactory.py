@@ -23,6 +23,8 @@ class FormatFactory(object):
         """
         self._logger = logger
         self._format_classes = []
+        for fmt in formats_to_include:
+            assert fmt in FormatFactory.get_possible_formats(), "%r is not a valid FORMAT" % fmt
         self._formats_to_include = formats_to_include
         if not no_samples:
             if GenotypeFormat.get_id() in formats_to_include:
@@ -33,6 +35,14 @@ class FormatFactory(object):
                 self._format_classes.append(BAlleleFreqFormat)
             if LogRRatioFormat.get_id() in formats_to_include:
                 self._format_classes.append(LogRRatioFormat)
+
+    @staticmethod
+    def get_possible_formats():
+        valid_classes = [GenotypeFormat.get_id(),
+                         GencallFormat.get_id(),
+                         BAlleleFreqFormat.get_id(),
+                         LogRRatioFormat.get_id()]
+        return valid_classes
 
     def get_format_id_string(self):
         """

@@ -38,6 +38,8 @@ def format_vcf_genotype(vcf_allele1_char, vcf_allele2_char, ploidy):
     if ploidy == 1:
         if vcf_allele1_char == vcf_allele2_char:
             return str(vcf_allele1_char)
+        else:
+            return str(max(vcf_allele1_char, vcf_allele2_char))
 
     vcf_genotype = ""
     if vcf_allele2_char < vcf_allele1_char:

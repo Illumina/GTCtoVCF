@@ -221,7 +221,7 @@ class RecordCombiner(object):
                 length 2 where each string is a nucleotide on the plus strand
         """
         idx2inconsistent = [False] * len(possible_genotypes)
-        for idx in xrange(len(possible_genotypes)):
+        for idx in range(len(possible_genotypes)):
             for record in self._bpm_records:
                 if self._record_inconsistent_with_genotype(record, possible_genotypes[idx]):
                     idx2inconsistent[idx] = True

@@ -72,11 +72,16 @@ def verify_inputs(args):
 
     return errors
 
+
+CHROM_DICT = {
+    "X": 23, "Y": 24, "MT": 25
+}
+
 def chrom_sort(chrom_string):
     """ Convert input chromosome string to appropriate type to ensure native
     	sort functions sorts chromosomes in order 1-22,X,Y,MT
     """
-    return int(chrom_string) if str(chrom_string).isdigit() else chrom_string.lower()
+    return int(chrom_string) if str(chrom_string).isdigit() else CHROM_DICT.get(chrom_string, 26)
 
 def get_sample_name(gtc, gtc_file):
     sample_name = gtc.get_sample_name()

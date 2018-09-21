@@ -55,7 +55,7 @@ class LocusEntryFactory(object):
             position = (record.chromosome, record.pos, (record.get_indel_source_sequences(RefStrand.Plus)[1], record.is_deletion) if record.is_indel() else None)
             position2record.setdefault(position, []).append(record)
 
-        for _, value in position2record.iteritems():
+        for _, value in position2record.items():
             if len(value) > 1 and self._unsquash_duplicates:
                 alleles = set()
                 for bpm_record in value:

@@ -9,7 +9,7 @@ usage: gtc_to_vcf.py [-h] [--gtc-paths GTC_PATHS [GTC_PATHS ...]]
                      [--expand-identifiers] [--unsquash-duplicates]
                      [--auxiliary-loci AUXILIARY_LOCI]
                      [--filter-loci FILTER_LOCI] [--disable-genome-cache]
-                     [--include-attributes [{BAF,LRR} [{BAF,LRR} ...]]]
+                     [--include-attributes [{GT,GQ,BAF,LRR} [{GT,GQ,BAF,LRR} ...]]]
                      [--version]
 
 Convert GTC file to VCF format

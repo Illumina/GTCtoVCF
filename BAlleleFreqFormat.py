@@ -1,4 +1,5 @@
 from vcf.parser import _Format
+from IlluminaBeadArrayFiles import RefStrand
 import numpy as np
 
 REVERSE_COMPLIMENT = {"A": "T", "T": "A", "G": "C", "C": "G"}
@@ -15,8 +16,8 @@ def extract_alleles_from_snp_string(snp_string):
          allele1 (string), allele2 (string)
     """
     (allele1, allele2) = snp_string[1:4].split("/")
-    assert allele1 in "ATGC"
-    assert allele2 in "ATGC"
+    # assert allele1 in "ATGC", "allele %r is invalid (expected A,T,G,C)" % allele1
+    # assert allele2 in "ATGC", "allele %r is invalid (expected A,T,G,C)" % allele2
     return allele1, allele2
 
 
@@ -69,45 +70,32 @@ class BAlleleFreqFormat(object):
         """
         # if we have more than 1 BPMRecord, need to merge
         b_allele_freq_list = []
-        if len(bpm_records) > 1:
-            # if we have more than 1 alt allele, return missing
-            if len(vcf_record.ALT) > 1:
-                return "."
-            for i in range(len(bpm_records)):
-                snp = bpm_records[i].snp
-                strand = bpm_records[i].ref_strand
+        # if we have more than 1 alt allele, return missing
+        if len(vcf_record.ALT) > 1:
+            return "."
+        for i in range(len(bpm_records)):
+            snp = bpm_records[i].snp
+            print(snp)
+            strand = bpm_records[i].ref_strand
 
-                idx = bpm_records[i].index_num
-                b_allele_freq = self._b_allele_freq[idx]
-                # if  second strand, normalize strand
-                if strand == 1:
-                    allele1, allele2 = extract_alleles_from_snp_string(snp)
-                else:
-                    allele1, allele2 = normalize_alleles_by_strand(snp)
+            idx = bpm_records[i].index_num
+            b_allele_freq = self._b_allele_freq[idx]
+            # if  second (minus) strand, normalize strand
+            if strand == RefStrand.Minus:
+                allele1, allele2 = normalize_alleles_by_strand(snp)
+            else:
+                allele1, allele2 = extract_alleles_from_snp_string(snp)
 
-                # normalize to reference allele
-                ref_allele = vcf_record.REF
-                # if allele1 is reference, then B allele is correct
-                if allele1 == ref_allele:
-                    b_allele_freq_list.append(b_allele_freq)
-                # if allele2 is reference, then we need to do 1-freq
-                elif allele2 == ref_allele:
-                    b_allele_freq_list.append(1. - b_allele_freq)
-
-                #chrom = bpm_records[i].chromosome
-                #start_pos = bpm_records[i].pos
-                #alt_allele = vcf_record.ALT
-                #print("chr: {} pos: {} ref: {} alt: {} snp: {} strand: {} BAF: {}".format(chrom, start_pos, ref_allele, alt_allele, snp, strand, b_allele_freq))
-
-            #print(b_allele_freq_list)
-
-        # otherwise single BPMRecord
-        else:
-            # if we have a multi-allelic site, return missing
-            if len(vcf_record.ALT) > 1:
-                return "."
-            idx = bpm_records[0].index_num
-            b_allele_freq_list.append(self._b_allele_freq[idx])
+            # normalize to reference allele
+            ref_allele = vcf_record.REF
+            # if allele1 is reference, then B allele is correct
+            if allele1 == ref_allele:
+                b_allele_freq_list.append(b_allele_freq)
+            # if allele2 is reference, then we need to do 1-freq
+            elif allele2 == ref_allele:
+                b_allele_freq_list.append(1. - b_allele_freq)
+            else:
+                print("ref allele: {} allele1: {} allele2: {}".format(ref_allele, allele1, allele2))
 
         # nanmedian ignores NaN values
         final_b_allele_freq = np.nanmedian(b_allele_freq_list)

@@ -58,6 +58,21 @@ class ReferenceGenome(object):
         """
         return zip(self._fasta_file.references, self._fasta_file.lengths)
 
+    def get_contig_order(self):
+        """
+        Get a dictionary with the ordering of the contigs
+
+        Args:
+            None
+
+        Returns:
+            dict(string,int): Return a dictionary mapping from contig name to order of that contig
+        """
+        result = {}
+        for (idx, contig) in enumerate(self._fasta_file.references):
+            result[contig] = idx
+        return result
+
     def get_reference_bases(self, chrom, start, end):
         """
         Get the reference bases from start to end
@@ -97,6 +112,7 @@ class CachedReferenceGenome(object):
         self._cache = CachedReferenceGenome.generate_genome_cache(reference_genome)
         self._logger.info("Finished caching reference data")
         self.genome_fasta_file = reference_genome.genome_fasta_file
+        self._contig_order = reference_genome.get_contig_order()
 
     @staticmethod
     def generate_genome_cache(reference_genome):
@@ -113,6 +129,18 @@ class CachedReferenceGenome(object):
         for (contig, contig_length) in reference_genome.get_contig_lengths():
             result[contig] = reference_genome.get_reference_bases(contig, 0, contig_length)
         return result
+
+    def get_contig_order(self):
+        """
+        Get a dictionary with the ordering of the contigs
+
+        Args:
+            None
+
+        Returns:
+            dict(string,int): Return a dictionary mapping from contig name to order of that contig
+        """
+        return self._contig_order
 
     def get_contig_lengths(self):
         """

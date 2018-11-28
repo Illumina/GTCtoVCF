@@ -72,17 +72,6 @@ def verify_inputs(args):
 
     return errors
 
-
-CHROM_DICT = {
-    "X": 23, "Y": 24, "MT": 25
-}
-
-def chrom_sort(chrom_string):
-    """ Convert input chromosome string to appropriate type to ensure native
-    	sort functions sorts chromosomes in order 1-22,X,Y,MT
-    """
-    return int(chrom_string) if str(chrom_string).isdigit() else CHROM_DICT.get(chrom_string, 26)
-
 def get_sample_name(gtc, gtc_file):
     sample_name = gtc.get_sample_name()
     if not sample_name:
@@ -147,9 +136,9 @@ def read_auxiliary_records(auxiliary_loci):
 
 def driver(gtc_files, manifest_reader, genome_reader, output_vcf_files, expand_identifiers, unsquash_duplicates, auxiliary_records, logger):
     format_factory = FormatFactory(gtc_files[0] is None, logger)
-    reader_template_factory = ReaderTemplateFactory(genome_reader, format_factory, "4.1", "gtc_to_vcf " + VERSION, chrom_sort, logger)
+    reader_template_factory = ReaderTemplateFactory(genome_reader, format_factory, "4.1", "gtc_to_vcf " + VERSION, genome_reader.get_contig_order(), logger)
     vcf_record_factory = VcfRecordFactory(format_factory, genome_reader, expand_identifiers, auxiliary_records, logger)
-    locus_entries = LocusEntryFactory(vcf_record_factory, chrom_sort, unsquash_duplicates, logger).create_locus_entries(manifest_reader)
+    locus_entries = LocusEntryFactory(vcf_record_factory, genome_reader.get_contig_order(), unsquash_duplicates, logger).create_locus_entries(manifest_reader)
 
     for (gtc_file, output_vcf_file) in zip(gtc_files, output_vcf_files):
         if gtc_file:

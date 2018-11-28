@@ -597,13 +597,14 @@ class NormalizationTransform:
         return NormalizationTransform(handle.read(52))
 
     @staticmethod
-    def rect_to_polar(x,y):
+    def rect_to_polar(x_y):
         """Converts normalized x,y intensities to (pseudo) polar co-ordinates (R, theta)
         Args:
-            x,y (float, float): Normalized x,y intensities for probe
+            x_y (float, float): Normalized x,y intensities for probe
         Returns:
             (R,theta) polar values as tuple of floats
         """
+        x,y = x_y
         if x == 0 and y == 0:
             return (nan, nan)
         return (x + y, arctan2(y,x) * 2.0 / pi)

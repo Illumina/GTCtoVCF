@@ -92,7 +92,7 @@ class VcfRecordFactory(object):
         if len(bpm_record_group) == 1:
             return bpm_record_group[0].name
         elif self._expand_identifiers:
-            return ",".join(
+            return ";".join(
                 [bpm_record.name for bpm_record in bpm_record_group])
         min_identifier_length = min(
             [len(bpm_record.name) for bpm_record in bpm_record_group])

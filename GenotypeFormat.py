@@ -13,9 +13,8 @@ def get_expected_ploidy(gender, chrom):
         Returns
             int: value of expected ploidy, currently set at 1 or 2
     """
-    if (gender == "M" and chrom == "X") or chrom == "Y" or chrom == "MT":
+    if (gender == b"M" and chrom == "X") or chrom == "Y" or chrom == "MT":
         return 1
-
     return 2
 
 

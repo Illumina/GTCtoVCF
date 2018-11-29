@@ -705,7 +705,7 @@ class BeadPoolManifest:
         """
         with open(manifest_file, "rb") as manifest_handle:
             header = manifest_handle.read(3)
-            if len(header) != 3 or header != "BPM":
+            if len(header) != 3 or header != b"BPM":
                 raise Exception("Invalid BPM format")
             version = read_byte(manifest_handle)
             if version != 1:

@@ -101,7 +101,7 @@ class TestCombinedGenotypes(unittest.TestCase):
             records[idx].index_num = idx
         genotypes = [datum[1] for datum in data]
         combiner = RecordCombiner(records, genotypes, "")
-        self.assertEqual(combiner.combine_genotypes(), expected_genotype)
+        self.assertEqual(sorted(combiner.combine_genotypes()), sorted(expected_genotype))
 
     def test_genotype_combination(self):
         logger = Logger("test_genotype_combinations")

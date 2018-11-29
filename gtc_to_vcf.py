@@ -128,7 +128,7 @@ def read_auxiliary_records(auxiliary_loci):
     """
     if auxiliary_loci is not None:
         auxiliary_records = {}
-        with open(auxiliary_loci, "rb") as auxiliary_handle:
+        with open(auxiliary_loci, "rt") as auxiliary_handle:
             for record in Reader(auxiliary_handle):
                 auxiliary_records[record.ID] = record
         return auxiliary_records

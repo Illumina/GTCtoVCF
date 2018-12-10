@@ -97,11 +97,11 @@ class TestSourceSequence(unittest.TestCase):
 class TestCombinedGenotypes(unittest.TestCase):
     def check_genotype(self, data, expected_genotype):
         records = [datum[0] for datum in data]
-        for idx in xrange(len(records)):
+        for idx in range(len(records)):
             records[idx].index_num = idx
         genotypes = [datum[1] for datum in data]
         combiner = RecordCombiner(records, genotypes, "")
-        self.assertEqual(combiner.combine_genotypes(), expected_genotype)
+        self.assertEqual(sorted(combiner.combine_genotypes()), sorted(expected_genotype))
 
     def test_genotype_combination(self):
         logger = Logger("test_genotype_combinations")

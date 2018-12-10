@@ -6,7 +6,7 @@ class LocusEntryFactory(object):
     Class to create locus entries from BPM records
     """
 
-    def __init__(self, vcf_record_factory, chrom_sort_function, unsquash_duplicates, logger):
+    def __init__(self, vcf_record_factory, chrom_order, unsquash_duplicates, logger):
         """
         Create new locus entry factory
 
@@ -17,7 +17,7 @@ class LocusEntryFactory(object):
             logger (logging.Logger): Logger to report warnings/errors
         """
         self._vcf_record_factory = vcf_record_factory
-        self._chrom_sort_function = chrom_sort_function
+        self._chrom_order = chrom_order
         self._unsquash_duplicates = unsquash_duplicates
         self._logger = logger
 
@@ -36,7 +36,7 @@ class LocusEntryFactory(object):
         result = []
         for record_group in self._group_bpm_records(bpm_reader.get_bpm_records()):
             result.append(self._generate_locus_entry(record_group))
-        return sorted(result, key=lambda entry: (self._chrom_sort_function(entry.vcf_record.CHROM), entry.vcf_record.POS, entry.vcf_record.REF))
+        return sorted(result, key=lambda entry: (self._chrom_order[str(entry.vcf_record.CHROM)], entry.vcf_record.POS, entry.vcf_record.REF))
 
     def _group_bpm_records(self, bpm_records):
         """
@@ -55,7 +55,7 @@ class LocusEntryFactory(object):
             position = (record.chromosome, record.pos, (record.get_indel_source_sequences(RefStrand.Plus)[1], record.is_deletion) if record.is_indel() else None)
             position2record.setdefault(position, []).append(record)
 
-        for _, value in position2record.iteritems():
+        for _, value in position2record.items():
             if len(value) > 1 and self._unsquash_duplicates:
                 alleles = set()
                 for bpm_record in value:

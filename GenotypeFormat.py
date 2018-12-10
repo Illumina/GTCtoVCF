@@ -13,9 +13,8 @@ def get_expected_ploidy(gender, chrom):
         Returns
             int: value of expected ploidy, currently set at 1 or 2
     """
-    if (gender == "M" and chrom == "X") or chrom == "Y" or chrom == "MT":
+    if (gender == b"M" and chrom == "X") or chrom == "Y" or chrom == "MT":
         return 1
-
     return 2
 
 
@@ -221,7 +220,7 @@ class RecordCombiner(object):
                 length 2 where each string is a nucleotide on the plus strand
         """
         idx2inconsistent = [False] * len(possible_genotypes)
-        for idx in xrange(len(possible_genotypes)):
+        for idx in range(len(possible_genotypes)):
             for record in self._bpm_records:
                 if self._record_inconsistent_with_genotype(record, possible_genotypes[idx]):
                     idx2inconsistent[idx] = True

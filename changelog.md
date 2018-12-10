@@ -1,3 +1,8 @@
+# Development
+* Python3 compatibility fixes
+* Use chromosome ordering from reference
+* Use semi-colon as delimiter within identifier field
+
 # 1.1.1 (2018/03/27)
 * Output warning if any mismatch to reference genome in indel source sequence
 * Count length of indel when scoring deletion reference allele

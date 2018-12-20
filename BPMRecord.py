@@ -87,7 +87,7 @@ class BPMRecord(object):
 
         Args:
             name (string) : Name field from manifest
-            name (string) : AddressA_ID field from manifest
+            address_a (string) : AddressA_ID field from manifest
             probe_a (string) : AlleleA_ProbeSeq field from manifest
             chromosome (string) : Chr field from manifest
             pos (string, int) : MapInfo field from manifest

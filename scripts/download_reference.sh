@@ -6,7 +6,7 @@ then
     exit 1
 fi
 
-output_file=`realpath ${1}`
+output_file=`readlink -f ${1}`
 output_dir=`dirname ${output_file}`
 genome_build=${2:-"37"}
 

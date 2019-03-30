@@ -19,7 +19,7 @@ else
 	exit 1
 fi
 
-temp_dir=`mktemp -d -p ${output_dir}`
+temp_dir=`mktemp -d 2>/dev/null || mktemp -d -t ${output_dir}`
 pushd ${temp_dir}
 
 for chrom in `seq 1 22` X Y MT
@@ -30,7 +30,7 @@ done
 for chrom in `seq 1 22` X Y MT
 do
     echo ">${chrom}" >> ${output_file}
-    gunzip -c *_ref_*chr${chrom}.fa.gz | grep -v ">" >> ${output_file}
+    gunzip -c *_ref_*chr${chrom}.fa.gz | grep -v ">" >> "${output_file}"
 done
 
 if hash samtools 2>/dev/null; then

@@ -134,7 +134,7 @@ docker run -it -d -v /home/user/outputs:/outputs \
   --output-vcf-path /outputs
 ```
 
-### Downloading reference genome
+### Downloading the reference genome
 You can call the download_reference.sh script without the samtools or GNU coreutils dependencies by overwriting the entrypoint of the container, i.e.:
 `docker run -v $(pwd):/input --entrypoint=/opt/gtc_to_vcf/scripts/download_reference.sh gtc_to_vcf /input/genome.fa 38`
 
@@ -143,6 +143,9 @@ You can call the download_reference.sh script without the samtools or GNU coreut
 ```
 mv /location/of/genome.fa* tests/data
 docker build -t gtc_to_vcf .
+```
+2. Run the tests
+```
 docker run --entrypoint=/root/miniconda2/bin/python gtc_to_vcf /opt/gtc_to_vcf/tests/test_class.py
 ```
 

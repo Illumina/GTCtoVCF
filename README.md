@@ -113,6 +113,39 @@ conda install -c bioconda pysam=0.9.0
 ```
 where conda is a the package manager binary located in the installation location specified in the first step. 
 
+## Docker Usage
+
+### Building
+If you'd like to run GTCtoVCF without installing any dependencies (other than docker) you can build the docker image, i.e.:
+`docker build -t gtc_to_vcf .`
+
+### Running
+The docker container takes the same arguments and options as the script.
+But all inputs and outputs must be "mounted" from the host into the container via `-v`.
+An example run might look something like this:
+```
+docker run -it -d -v /home/user/outputs:/outputs \
+  -v /home/user/inputs:/inputs \
+  -v /home/user/gtcs:/gtcs \
+  -v /home/user/genomes/:/genomes \
+  gtc_to_vcf --gtc-paths /gtcs \
+  --manifest-file /inputs/manifest.csv \
+  --genome-fasta-file /genomes/38/genome.fa \
+  --output-vcf-path /outputs
+```
+
+### Downloading reference genome
+You can call the download_reference.sh script without the samtools or GNU coreutils dependencies by overwriting the entrypoint of the container, i.e.:
+`docker run -v $(pwd):/input --entrypoint=/opt/gtc_to_vcf/scripts/download_reference.sh gtc_to_vcf /input/genome.fa 38`
+
+### Testing
+1. (Optionally) Skip re-downloading the reference genome if you have a local copy of a genome fasta (.fa) and genome fasta index (.fai) file.
+```
+mv /location/of/genome.fa* tests/data
+docker build -t gtc_to_vcf .
+docker run --entrypoint=/root/miniconda2/bin/python gtc_to_vcf /opt/gtc_to_vcf/tests/test_class.py
+```
+
 ## License
 
 Copyright 2018 Illumina

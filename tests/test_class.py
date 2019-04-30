@@ -205,9 +205,9 @@ class TestCombinedGenotypes(unittest.TestCase):
         data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1, logger), 2))
         self.check_genotype(data, ('T', 'G'))
 
-        # Inf II [A/G] -> AG
-        # Inf I [T/G] -> TG
-        # TG
+        # Inf II [A/G] -> AA
+        # Inf I [T/G] -> TT
+        # --
         data = []
         data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 0, None, None, None, None, 1, logger), 1))
         data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1, logger), 1))

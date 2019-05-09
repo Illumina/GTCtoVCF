@@ -75,7 +75,6 @@ class BAlleleFreqFormat(object):
             return "."
         for i in range(len(bpm_records)):
             snp = bpm_records[i].snp
-            print(snp)
             strand = bpm_records[i].ref_strand
 
             idx = bpm_records[i].index_num
@@ -88,14 +87,13 @@ class BAlleleFreqFormat(object):
 
             # normalize to reference allele
             ref_allele = vcf_record.REF
+            assert allele1 == ref_allele or allele2 == ref_allele
             # if allele1 is reference, then B allele is correct
             if allele1 == ref_allele:
                 b_allele_freq_list.append(b_allele_freq)
             # if allele2 is reference, then we need to do 1-freq
-            elif allele2 == ref_allele:
-                b_allele_freq_list.append(1. - b_allele_freq)
             else:
-                print("ref allele: {} allele1: {} allele2: {}".format(ref_allele, allele1, allele2))
+                b_allele_freq_list.append(1. - b_allele_freq)
 
         # nanmedian ignores NaN values
         final_b_allele_freq = np.nanmedian(b_allele_freq_list)

@@ -81,7 +81,7 @@ class RegressionAux(Regression):
 class RegressionIncludeAttributes(Regression):
     def test(self):
         output_vcf = tempfile.mktemp(suffix=".vcf")
-        command = [sys.executable, self.get_script(), "--genome-fasta-file", self.get_genome(), "--manifest-file", os.path.join(SCRIPT_DIR, "data", "small_manifest.bpm"), "--gtc-paths", os.path.join(SCRIPT_DIR, "data", "RegressionIncludeAttributes", "input", "201142750001_R01C01.gtc"), "--output-vcf-path", output_vcf, "--disable-genome-cache", "--skip-indels", "--include-attributes", "GT", "GQ", "BAF", "LRR"]
+        command = [sys.executable, self.get_script(), "--genome-fasta-file", self.get_genome(), "--manifest-file", os.path.join(SCRIPT_DIR, "data", "small_manifest.csv"), "--gtc-paths", os.path.join(SCRIPT_DIR, "data", "RegressionIncludeAttributes", "input", "201142750001_R01C01.gtc"), "--output-vcf-path", output_vcf, "--disable-genome-cache", "--include-attributes", "GT", "GQ", "BAF", "LRR"]
         self.run_regression(command, output_vcf, os.path.join(SCRIPT_DIR, "data", "RegressionIncludeAttributes", "output", "output.vcf"))
         os.remove(output_vcf)
 

@@ -91,6 +91,11 @@ The GTC converter tool provides an option to supply a list of auxiliary records 
 * The auxiliary definition must be a multi-nucleotide variant.
 * There must not be multiple array assays (e.g., duplicates) for the locus.
 
+### Include Attributes
+Default attributes to be included in the VCF are "GT" (genotype) and "GQ" (genotype score).
+With this option, you can compose which fields from the GTC are output to the VCF.
+The additional fields available (from GTC version 5) are "BAF" (B-Allele Frequency) and "LRR" (Log-R Ratio).
+
 ## Output description
 The VCF file output follows VCF4.1 format (https://samtools.github.io/hts-specs/VCFv4.1.pdf). Some additional details on output formatting:
 * Genotypes are adjusted to reflect the sample ploidy. Calls are haploid for loci on Y, MT and non-PAR chromosome X for males.

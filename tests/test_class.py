@@ -78,6 +78,13 @@ class RegressionAux(Regression):
         self.run_regression(command, output_vcf, os.path.join(SCRIPT_DIR, "data", "RegressionAux", "output", "output.vcf"))
         os.remove(output_vcf)
 
+class RegressionIncludeAttributes(Regression):
+    def test(self):
+        output_vcf = tempfile.mktemp(suffix=".vcf")
+        command = [sys.executable, self.get_script(), "--genome-fasta-file", self.get_genome(), "--manifest-file", os.path.join(SCRIPT_DIR, "data", "small_manifest.bpm"), "--gtc-paths", os.path.join(SCRIPT_DIR, "data", "RegressionIncludeAttributes", "input", "201142750001_R01C01.gtc"), "--output-vcf-path", output_vcf, "--disable-genome-cache", "--skip-indels", "--include-attributes", "GT", "GQ", "BAF", "LRR"]
+        self.run_regression(command, output_vcf, os.path.join(SCRIPT_DIR, "data", "RegressionIncludeAttributes", "output", "output.vcf"))
+        os.remove(output_vcf)
+
 class TestSourceSequence(unittest.TestCase):
     def test_source_sequence_split(self):
         (five_prime, indel, three_prime) = IndelSourceSequence.split_source_sequence("ACGT[-/ATAT]GGTA")

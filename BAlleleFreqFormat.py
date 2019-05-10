@@ -2,7 +2,7 @@ from vcf.parser import _Format
 from IlluminaBeadArrayFiles import RefStrand
 import numpy as np
 
-REVERSE_COMPLIMENT = {"A": "T", "T": "A", "G": "C", "C": "G"}
+REVERSE_COMPLIMENT = {"A": "T", "T": "A", "G": "C", "C": "G", "I": "I", "D": "D"}
 
 
 def extract_alleles_from_snp_string(snp_string):
@@ -16,8 +16,8 @@ def extract_alleles_from_snp_string(snp_string):
          allele1 (string), allele2 (string)
     """
     (allele1, allele2) = snp_string[1:4].split("/")
-    # assert allele1 in "ATGC", "allele %r is invalid (expected A,T,G,C)" % allele1
-    # assert allele2 in "ATGC", "allele %r is invalid (expected A,T,G,C)" % allele2
+    assert allele1 in "ATGCID", "allele %r is invalid (expected A,T,G,C,I,D)" % allele1
+    assert allele2 in "ATGCID", "allele %r is invalid (expected A,T,G,C,I,D)" % allele2
     return allele1, allele2
 
 
@@ -37,6 +37,30 @@ def normalize_alleles_by_strand(snp_string):
     # get reverse compliment of bases and return
     return REVERSE_COMPLIMENT[allele1], REVERSE_COMPLIMENT[allele2]
 
+
+def convert_indel_alleles(snp_string, vcf_record):
+    """
+    Splits SNP string into tuple of individual alleles and
+    converts to actual insertion/deletion alleles from the reference
+
+    Args: snp_string (string): allele string of the format
+        [I/D] or [D/I]
+
+    Returns:
+         allele1 (string), allele2 (string)
+    """
+    # get alleles as tuple, we only need allele1 because if its "I" we can assume allele2 will be "D" and vice-versa
+    allele1, _ = extract_alleles_from_snp_string(snp_string)
+
+    assert len(vcf_record.ALT) == 1, "Cannot convert indel for BAF with multiple ALT alleles"
+    alt_allele = str(vcf_record.ALT[0])
+    ref_allele = vcf_record.REF
+    # Assuming whichever sequence is smaller is the deletion and the larger is the insertion
+    assert len(alt_allele) > len(ref_allele) or len(ref_allele) > len(alt_allele), "REF allele %r and ALT allele %r same length, cannot determine insertion or deletion" % (ref_allele, alt_allele)
+    deletion_allele, insertion_allele = (alt_allele, ref_allele) if len(alt_allele) < len(ref_allele) else (ref_allele, alt_allele)
+    if allele1 == "I":
+        return insertion_allele, deletion_allele
+    return deletion_allele, insertion_allele
 
 class BAlleleFreqFormat(object):
     """
@@ -74,20 +98,24 @@ class BAlleleFreqFormat(object):
         if len(vcf_record.ALT) > 1:
             return "."
         for i in range(len(bpm_records)):
-            snp = bpm_records[i].snp
-            strand = bpm_records[i].ref_strand
-
-            idx = bpm_records[i].index_num
+            bpm_record = bpm_records[i]
+            snp = bpm_record.snp
+            strand = bpm_record.ref_strand
+            idx = bpm_record.index_num
             b_allele_freq = self._b_allele_freq[idx]
-            # if  second (minus) strand, normalize strand
-            if strand == RefStrand.Minus:
+
+            # if indel, convert to actual ref and alt sequences
+            if bpm_record.is_indel():
+                allele1, allele2 = convert_indel_alleles(snp, vcf_record)
+            # if  2/minus strand, normalize strand
+            elif strand == RefStrand.Minus:
                 allele1, allele2 = normalize_alleles_by_strand(snp)
             else:
                 allele1, allele2 = extract_alleles_from_snp_string(snp)
 
             # normalize to reference allele
             ref_allele = vcf_record.REF
-            assert allele1 == ref_allele or allele2 == ref_allele
+            assert allele1 == ref_allele or allele2 == ref_allele, "allele1: %r or allele2 %r do not match ref: %r" % (allele1, allele2, ref_allele)
             # if allele1 is reference, then B allele is correct
             if allele1 == ref_allele:
                 b_allele_freq_list.append(b_allele_freq)

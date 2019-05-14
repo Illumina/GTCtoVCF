@@ -2,8 +2,7 @@ from vcf.parser import _Format
 from IlluminaBeadArrayFiles import RefStrand
 import numpy as np
 
-REVERSE_COMPLIMENT = {"A": "T", "T": "A", "G": "C", "C": "G", "I": "I", "D": "D"}
-
+REVERSE_COMPLEMENT = {"A": "T", "T": "A", "G": "C", "C": "G", "I": "I", "D": "D"}
 
 def extract_alleles_from_snp_string(snp_string):
     """
@@ -16,12 +15,12 @@ def extract_alleles_from_snp_string(snp_string):
          allele1 (string), allele2 (string)
     """
     (allele1, allele2) = snp_string[1:4].split("/")
-    assert allele1 in "ATGCID", "allele %r is invalid (expected A,T,G,C,I,D)" % allele1
-    assert allele2 in "ATGCID", "allele %r is invalid (expected A,T,G,C,I,D)" % allele2
+    assert allele1 in REVERSE_COMPLEMENT, "allele %r is invalid (expected A,T,G,C,I,D)" % allele1
+    assert allele2 in REVERSE_COMPLEMENT, "allele %r is invalid (expected A,T,G,C,I,D)" % allele2
     return allele1, allele2
 
 
-def normalize_alleles_by_strand(snp_string):
+def extract_reverse_complement_alleles_from_snp_string(snp_string):
     """
     Splits SNP string into tuple of individual alleles and
     gets takes the reverse compliment to match strand 1
@@ -35,7 +34,7 @@ def normalize_alleles_by_strand(snp_string):
     # get alleles as tuple
     allele1, allele2 = extract_alleles_from_snp_string(snp_string)
     # get reverse compliment of bases and return
-    return REVERSE_COMPLIMENT[allele1], REVERSE_COMPLIMENT[allele2]
+    return REVERSE_COMPLEMENT[allele1], REVERSE_COMPLEMENT[allele2]
 
 
 def convert_indel_alleles(snp_string, vcf_record):
@@ -107,9 +106,9 @@ class BAlleleFreqFormat(object):
             # if indel, convert to actual ref and alt sequences
             if bpm_record.is_indel():
                 allele1, allele2 = convert_indel_alleles(snp, vcf_record)
-            # if  2/minus strand, normalize strand
+            # if  2/minus strand, get rev comp
             elif strand == RefStrand.Minus:
-                allele1, allele2 = normalize_alleles_by_strand(snp)
+                allele1, allele2 = extract_reverse_complement_alleles_from_snp_string(snp)
             else:
                 allele1, allele2 = extract_alleles_from_snp_string(snp)
 

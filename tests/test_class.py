@@ -28,12 +28,13 @@ class Regression(unittest.TestCase):
 
     def compare_vcf(self, output, expected_output):
         self.assertTrue(os.path.isfile(output))
-        for (line1, line2) in zip(open(output), open(expected_output)):
-            if line1.startswith("##source") and line2.startswith("##source"):
-                continue
-            if line1.startswith("##reference") and line2.startswith("##reference"):
-                continue
-            self.assertEqual(line1, line2)
+        with open(output) as file1, open(expected_output) as file2:
+            for (line1, line2) in zip(file1, file2):
+                if line1.startswith("##source") and line2.startswith("##source"):
+                    continue
+                if line1.startswith("##reference") and line2.startswith("##reference"):
+                    continue
+                self.assertEqual(line1, line2)
 
 class RegressionBPM(Regression):
     def test(self):

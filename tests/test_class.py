@@ -28,12 +28,13 @@ class Regression(unittest.TestCase):
 
     def compare_vcf(self, output, expected_output):
         self.assertTrue(os.path.isfile(output))
-        for (line1, line2) in zip(open(output), open(expected_output)):
-            if line1.startswith("##source") and line2.startswith("##source"):
-                continue
-            if line1.startswith("##reference") and line2.startswith("##reference"):
-                continue
-            self.assertEqual(line1, line2)
+        with open(output) as file1, open(expected_output) as file2:
+            for (line1, line2) in zip(file1, file2):
+                if line1.startswith("##source") and line2.startswith("##source"):
+                    continue
+                if line1.startswith("##reference") and line2.startswith("##reference"):
+                    continue
+                self.assertEqual(line1, line2)
 
 class RegressionBPM(Regression):
     def test(self):
@@ -76,6 +77,13 @@ class RegressionAux(Regression):
         output_vcf = tempfile.mktemp(suffix=".vcf")
         command = [sys.executable, self.get_script(), "--genome-fasta-file", self.get_genome(), "--manifest-file", os.path.join(SCRIPT_DIR, "data", "small_manifest.csv"), "--output-vcf-path", output_vcf, "--auxiliary-loci", os.path.join(SCRIPT_DIR, "data", "RegressionAux", "input", "auxiliary.vcf"), "--disable-genome-cache"]
         self.run_regression(command, output_vcf, os.path.join(SCRIPT_DIR, "data", "RegressionAux", "output", "output.vcf"))
+        os.remove(output_vcf)
+
+class RegressionIncludeAttributes(Regression):
+    def test(self):
+        output_vcf = tempfile.mktemp(suffix=".vcf")
+        command = [sys.executable, self.get_script(), "--genome-fasta-file", self.get_genome(), "--manifest-file", os.path.join(SCRIPT_DIR, "data", "small_manifest.csv"), "--gtc-paths", os.path.join(SCRIPT_DIR, "data", "RegressionIncludeAttributes", "input", "201142750001_R01C01.gtc"), "--output-vcf-path", output_vcf, "--disable-genome-cache", "--include-attributes", "GT", "GQ", "BAF", "LRR"]
+        self.run_regression(command, output_vcf, os.path.join(SCRIPT_DIR, "data", "RegressionIncludeAttributes", "output", "output.vcf"))
         os.remove(output_vcf)
 
 class TestSourceSequence(unittest.TestCase):

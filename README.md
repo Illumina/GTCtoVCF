@@ -9,6 +9,7 @@ usage: gtc_to_vcf.py [-h] [--gtc-paths GTC_PATHS [GTC_PATHS ...]]
                      [--expand-identifiers] [--unsquash-duplicates]
                      [--auxiliary-loci AUXILIARY_LOCI]
                      [--filter-loci FILTER_LOCI] [--disable-genome-cache]
+                     [--include-attributes [{GT,GQ,BAF,LRR} [{GT,GQ,BAF,LRR} ...]]]
                      [--version]
 
 Convert GTC file to VCF format
@@ -37,6 +38,9 @@ optional arguments:
                         input manifest (optional)
   --disable-genome-cache
                         Disable caching of genome reference data
+  --include-attributes [{GT,GQ,BAF,LRR} [{GT,GQ,BAF,LRR} ...]]
+                        Additional attributes to include in VCF FORMAT output
+                        (optional) (default is GT GQ)
   --version             show program's version number and exit
 
 
@@ -86,6 +90,11 @@ The GTC converter tool provides an option to supply a list of auxiliary records 
 * The auxiliary definition must be bi-allelic.
 * The auxiliary definition must be a multi-nucleotide variant.
 * There must not be multiple array assays (e.g., duplicates) for the locus.
+
+### Include Attributes
+Default attributes to be included in the VCF are "GT" (genotype) and "GQ" (genotype score).
+With this option, you can compose which fields from the GTC are output to the VCF.
+The additional fields available (from GTC version 5) are "BAF" (B Allele Frequency) and "LRR" (Log R Ratio).
 
 ## Output description
 The VCF file output follows VCF4.1 format (https://samtools.github.io/hts-specs/VCFv4.1.pdf). Some additional details on output formatting:

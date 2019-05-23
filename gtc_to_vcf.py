@@ -134,8 +134,8 @@ def read_auxiliary_records(auxiliary_loci):
         return auxiliary_records
     return None
 
-def driver(gtc_files, manifest_reader, genome_reader, output_vcf_files, expand_identifiers, unsquash_duplicates, auxiliary_records, logger):
-    format_factory = FormatFactory(gtc_files[0] is None, logger)
+def driver(gtc_files, manifest_reader, genome_reader, output_vcf_files, expand_identifiers, unsquash_duplicates, auxiliary_records, attrs_to_include, logger):
+    format_factory = FormatFactory(gtc_files[0] is None, attrs_to_include, logger)
     reader_template_factory = ReaderTemplateFactory(genome_reader, format_factory, "4.1", "gtc_to_vcf " + VERSION, genome_reader.get_contig_order(), logger)
     vcf_record_factory = VcfRecordFactory(format_factory, genome_reader, expand_identifiers, auxiliary_records, logger)
     locus_entries = LocusEntryFactory(vcf_record_factory, genome_reader.get_contig_order(), unsquash_duplicates, logger).create_locus_entries(manifest_reader)
@@ -280,6 +280,7 @@ def main():
     parser.add_argument("--auxiliary-loci", dest="auxiliary_loci", default=None, required=False, help="VCF file with auxiliary definitions of loci (optional)")
     parser.add_argument("--filter-loci", dest="filter_loci", default=None, required=False, help="File containing list of loci names to filter from input manifest (optional)")
     parser.add_argument("--disable-genome-cache", dest="disable_genome_cache", default=False, action="store_true", help="Disable caching of genome reference data")
+    parser.add_argument("--include-attributes", dest="include_attributes", default=["GT", "GQ"], choices=FormatFactory.get_possible_formats(), nargs="*", help="Additional attributes to include in VCF FORMAT output (optional)")
     parser.add_argument("--version", action="version", version='%(prog)s ' + VERSION)
     args = parser.parse_args()
 
@@ -305,7 +306,7 @@ def main():
         manifest_reader = get_manifest_reader(args.manifest_file, genome_reader, loci_to_filter, args.skip_indels, logger)
         auxiliary_records = read_auxiliary_records(args.auxiliary_loci)
 
-        driver(gtc_paths, manifest_reader, genome_reader, output_vcf_files, args.expand_identifiers, args.unsquash_duplicates, auxiliary_records, logger)
+        driver(gtc_paths, manifest_reader, genome_reader, output_vcf_files, args.expand_identifiers, args.unsquash_duplicates, auxiliary_records, args.include_attributes, logger)
     except Exception as exception:
         logger.error(str(exception))
         logger.debug(traceback.format_exc(exception))

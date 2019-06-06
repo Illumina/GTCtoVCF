@@ -139,7 +139,7 @@ class GenotypeCalls:
         self.filename = filename
         with open(self.filename, "rb") as gtc_handle:
             identifier = gtc_handle.read(3)
-            if identifier != "gtc":
+            if identifier != b'gtc':
                 raise Exception("GTC format error: bad format identifier")
             self.version = read_byte(gtc_handle)
             if self.version not in GenotypeCalls.supported_version and not ignore_version:
@@ -151,7 +151,7 @@ class GenotypeCalls:
             # to the lookup
             #
             self.toc_table = {}
-            for toc_idx in xrange(number_toc_entries):
+            for toc_idx in range(number_toc_entries):
                 (id, offset) = struct.unpack("<hI",gtc_handle.read(6))
                 self.toc_table[id] = offset
         if check_write_complete and not self.is_write_complete():
@@ -188,7 +188,7 @@ class GenotypeCalls:
             gtc_handle.seek(self.toc_table[toc_entry])
             num_entries = read_int(gtc_handle)
             result = []
-            for idx in xrange(num_entries):
+            for idx in range(num_entries):
                 result.append( parse_function( gtc_handle ) )
             return result
 
@@ -376,7 +376,7 @@ class GenotypeCalls:
             gtc_handle.seek(self.toc_table[GenotypeCalls.__ID_BASE_CALLS])
             num_entries = read_int(gtc_handle)
             result = []
-            for idx in xrange(num_entries):
+            for idx in range(num_entries):
                 if ploidy_type == 1:
                     result.append( gtc_handle.read(2) )
                 else:
@@ -507,7 +507,7 @@ class GenotypeCalls:
         with open(self.filename, "rb") as gtc_handle:
             gtc_handle.seek(self.toc_table[GenotypeCalls.__ID_PERCENTILES_X])
             result = []
-            for idx in xrange(3):
+            for idx in range(3):
                 result.append(read_ushort(gtc_handle))
             return result
 
@@ -522,7 +522,7 @@ class GenotypeCalls:
         with open(self.filename, "rb") as gtc_handle:
             gtc_handle.seek(self.toc_table[GenotypeCalls.__ID_PERCENTILES_Y])
             result = []
-            for idx in xrange(3):
+            for idx in range(3):
                 result.append(read_ushort(gtc_handle))
             return result
        
@@ -597,13 +597,14 @@ class NormalizationTransform:
         return NormalizationTransform(handle.read(52))
 
     @staticmethod
-    def rect_to_polar((x,y)):
+    def rect_to_polar(x_y):
         """Converts normalized x,y intensities to (pseudo) polar co-ordinates (R, theta)
         Args:
-            x,y (float, float): Normalized x,y intensities for probe
+            x_y (float, float): Normalized x,y intensities for probe
         Returns:
             (R,theta) polar values as tuple of floats
         """
+        x,y = x_y
         if x == 0 and y == 0:
             return (nan, nan)
         return (x + y, arctan2(y,x) * 2.0 / pi)
@@ -704,7 +705,7 @@ class BeadPoolManifest:
         """
         with open(manifest_file, "rb") as manifest_handle:
             header = manifest_handle.read(3)
-            if len(header) != 3 or header != "BPM":
+            if len(header) != 3 or header != b"BPM":
                 raise Exception("Invalid BPM format")
             version = read_byte(manifest_handle)
             if version != 1:
@@ -724,11 +725,11 @@ class BeadPoolManifest:
             self.num_loci = read_int(manifest_handle)
             manifest_handle.seek(4 * self.num_loci, 1)
             name_lookup = {}
-            for idx in xrange(self.num_loci):
+            for idx in range(self.num_loci):
                 self.names.append(read_string(manifest_handle))
                 name_lookup[self.names[-1]] = idx
 
-            for idx in xrange(self.num_loci):
+            for idx in range(self.num_loci):
                 normalization_id = read_byte(manifest_handle)
                 if normalization_id >= 100:
                     raise Exception("Manifest format error: read invalid normalization ID")
@@ -741,7 +742,7 @@ class BeadPoolManifest:
             self.map_infos = [0] * self.num_loci
             self.ref_strands = [RefStrand.Unknown] * self.num_loci
             self.source_strands = [SourceStrand.Unknown] * self.num_loci
-            for idx in xrange(self.num_loci):
+            for idx in range(self.num_loci):
                 locus_entry = LocusEntry(manifest_handle)
                 self.assay_types[name_lookup[locus_entry.name]] = locus_entry.assay_type
                 self.addresses[name_lookup[locus_entry.name]] = locus_entry.address_a
@@ -755,12 +756,12 @@ class BeadPoolManifest:
                 raise Exception("Manifest format error: read invalid number of assay entries")
 
             all_norm_ids = set()
-            for locus_idx in xrange(self.num_loci):
+            for locus_idx in range(self.num_loci):
                 self.normalization_ids[locus_idx] += 100 * self.assay_types[locus_idx]
                 all_norm_ids.add(self.normalization_ids[locus_idx])
             sorted_norm_ids = sorted(all_norm_ids)
             lookup_dictionary = {}
-            for idx in xrange(len(sorted_norm_ids)):
+            for idx in range(len(sorted_norm_ids)):
                 lookup_dictionary[sorted_norm_ids[idx]] = idx
             self.normalization_lookups =  [lookup_dictionary[normalization_id] for normalization_id in self.normalization_ids]
 
@@ -913,21 +914,21 @@ class LocusEntry:
         self.ilmn_id = read_string(handle)
         self.source_strand = SourceStrand.from_string(self.ilmn_id.split("_")[-2])
         self.name = read_string(handle)
-        for idx in xrange(3):
+        for idx in range(3):
             read_string(handle)
         handle.read(4)
-        for idx in xrange(2):
+        for idx in range(2):
             read_string(handle)
         self.snp = read_string(handle)
         self.chrom = read_string(handle)
-        for idx in xrange(2):
+        for idx in range(2):
             read_string(handle)
         self.map_info = int(read_string(handle))
-        for idx in xrange(2):
+        for idx in range(2):
             read_string(handle)
         self.address_a = read_int(handle)
         self.address_b = read_int(handle)
-        for idx in xrange(7):
+        for idx in range(7):
             read_string(handle)
         handle.read(3)
         self.assay_type = read_byte(handle)
@@ -1038,7 +1039,7 @@ def read_string(handle):
     if len(result) < total_length:
         raise Exception("Failed to read complete string")
     else:
-        return result
+        return result.decode()
 
 def read_scanner_data(handle):
     """Helper function to parse ScannerData object from file handle. 

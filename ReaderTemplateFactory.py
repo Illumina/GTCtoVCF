@@ -6,7 +6,7 @@ from vcf.parser import Reader, _Contig
 class ReaderTemplateFactory(object):
     """Class to create new reader templates"""
 
-    def __init__(self, genome_reader, format_factory, vcf_version, software_id, chrom_sort_function, logger):
+    def __init__(self, genome_reader, format_factory, vcf_version, software_id, chrom_order, logger):
         """Create new ReaderTemplateFactory
 
         Args
@@ -14,6 +14,7 @@ class ReaderTemplateFactory(object):
             format_factory (FormatFactory): FormatFactory to provide information about format_string
             vcf_version (string): version of VCF file
             software_id (string): identifier for software creating the VCF
+            chrom_order dict(string,int) : dictionary from contig to order
             chrom_sort_function(string): function definition used to sort chromosomes
         Returns
             ReaderTemplateFactory
@@ -22,7 +23,7 @@ class ReaderTemplateFactory(object):
         self._format_factory = format_factory
         self._vcf_version = vcf_version
         self._software_id = software_id
-        self._chrom_sort_function = chrom_sort_function
+        self._chrom_order = chrom_order
         self._contigs = {}
         self._logger = logger
 
@@ -96,5 +97,5 @@ class ReaderTemplateFactory(object):
             else:
                 contigs[contig_name] = _Contig(contig_name, length)
         contigs = OrderedDict(
-            sorted(contigs.items(), key=lambda x: self._chrom_sort_function(x[0])))
+            sorted(contigs.items(), key=lambda x: self._chrom_order[str(x[0])]))
         return contigs

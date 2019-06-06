@@ -28,12 +28,13 @@ class Regression(unittest.TestCase):
 
     def compare_vcf(self, output, expected_output):
         self.assertTrue(os.path.isfile(output))
-        for (line1, line2) in zip(open(output), open(expected_output)):
-            if line1.startswith("##source") and line2.startswith("##source"):
-                continue
-            if line1.startswith("##reference") and line2.startswith("##reference"):
-                continue
-            self.assertEqual(line1, line2)
+        with open(output) as file1, open(expected_output) as file2:
+            for (line1, line2) in zip(file1, file2):
+                if line1.startswith("##source") and line2.startswith("##source"):
+                    continue
+                if line1.startswith("##reference") and line2.startswith("##reference"):
+                    continue
+                self.assertEqual(line1, line2)
 
 class RegressionBPM(Regression):
     def test(self):
@@ -78,6 +79,13 @@ class RegressionAux(Regression):
         self.run_regression(command, output_vcf, os.path.join(SCRIPT_DIR, "data", "RegressionAux", "output", "output.vcf"))
         os.remove(output_vcf)
 
+class RegressionIncludeAttributes(Regression):
+    def test(self):
+        output_vcf = tempfile.mktemp(suffix=".vcf")
+        command = [sys.executable, self.get_script(), "--genome-fasta-file", self.get_genome(), "--manifest-file", os.path.join(SCRIPT_DIR, "data", "small_manifest.csv"), "--gtc-paths", os.path.join(SCRIPT_DIR, "data", "RegressionIncludeAttributes", "input", "201142750001_R01C01.gtc"), "--output-vcf-path", output_vcf, "--disable-genome-cache", "--include-attributes", "GT", "GQ", "BAF", "LRR"]
+        self.run_regression(command, output_vcf, os.path.join(SCRIPT_DIR, "data", "RegressionIncludeAttributes", "output", "output.vcf"))
+        os.remove(output_vcf)
+
 class TestSourceSequence(unittest.TestCase):
     def test_source_sequence_split(self):
         (five_prime, indel, three_prime) = IndelSourceSequence.split_source_sequence("ACGT[-/ATAT]GGTA")
@@ -97,11 +105,11 @@ class TestSourceSequence(unittest.TestCase):
 class TestCombinedGenotypes(unittest.TestCase):
     def check_genotype(self, data, expected_genotype):
         records = [datum[0] for datum in data]
-        for idx in xrange(len(records)):
+        for idx in range(len(records)):
             records[idx].index_num = idx
         genotypes = [datum[1] for datum in data]
         combiner = RecordCombiner(records, genotypes, "")
-        self.assertEqual(combiner.combine_genotypes(), expected_genotype)
+        self.assertEqual(sorted(combiner.combine_genotypes()), sorted(expected_genotype))
 
     def test_genotype_combination(self):
         logger = Logger("test_genotype_combinations")
@@ -205,9 +213,9 @@ class TestCombinedGenotypes(unittest.TestCase):
         data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1, logger), 2))
         self.check_genotype(data, ('T', 'G'))
 
-        # Inf II [A/G] -> AG
-        # Inf I [T/G] -> TG
-        # TG
+        # Inf II [A/G] -> AA
+        # Inf I [T/G] -> TT
+        # --
         data = []
         data.append((BPMRecord("", None, None, "", 0, "[A/G]", RefStrand.Plus, 0, None, None, None, None, 1, logger), 1))
         data.append((BPMRecord("", None, None, "", 0, "[T/G]", RefStrand.Plus, 1, None, None, None, None, 1, logger), 1))

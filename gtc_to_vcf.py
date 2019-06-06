@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 import os
 import sys
@@ -17,7 +17,7 @@ from VcfRecordFactory import VcfRecordFactory
 from ReaderTemplateFactory import ReaderTemplateFactory
 from FormatFactory import FormatFactory
 
-VERSION = "1.1.1"
+VERSION = "1.2.0"
 
 def is_dir_writable(parent_dir):
     try:
@@ -71,12 +71,6 @@ def verify_inputs(args):
             errors.append("Unable to write to output file " + args.output_vcf_path)
 
     return errors
-
-def chrom_sort(chrom_string):
-    """ Convert input chromosome string to appropriate type to ensure native
-    	sort functions sorts chromosomes in order 1-22,X,Y,MT
-    """
-    return int(chrom_string) if str(chrom_string).isdigit() else chrom_string.lower()
 
 def get_sample_name(gtc, gtc_file):
     sample_name = gtc.get_sample_name()
@@ -134,17 +128,17 @@ def read_auxiliary_records(auxiliary_loci):
     """
     if auxiliary_loci is not None:
         auxiliary_records = {}
-        with open(auxiliary_loci, "rb") as auxiliary_handle:
+        with open(auxiliary_loci, "rt") as auxiliary_handle:
             for record in Reader(auxiliary_handle):
                 auxiliary_records[record.ID] = record
         return auxiliary_records
     return None
 
-def driver(gtc_files, manifest_reader, genome_reader, output_vcf_files, expand_identifiers, unsquash_duplicates, auxiliary_records, logger):
-    format_factory = FormatFactory(gtc_files[0] is None, logger)
-    reader_template_factory = ReaderTemplateFactory(genome_reader, format_factory, "4.1", "gtc_to_vcf " + VERSION, chrom_sort, logger)
+def driver(gtc_files, manifest_reader, genome_reader, output_vcf_files, expand_identifiers, unsquash_duplicates, auxiliary_records, attrs_to_include, logger):
+    format_factory = FormatFactory(gtc_files[0] is None, attrs_to_include, logger)
+    reader_template_factory = ReaderTemplateFactory(genome_reader, format_factory, "4.1", "gtc_to_vcf " + VERSION, genome_reader.get_contig_order(), logger)
     vcf_record_factory = VcfRecordFactory(format_factory, genome_reader, expand_identifiers, auxiliary_records, logger)
-    locus_entries = LocusEntryFactory(vcf_record_factory, chrom_sort, unsquash_duplicates, logger).create_locus_entries(manifest_reader)
+    locus_entries = LocusEntryFactory(vcf_record_factory, genome_reader.get_contig_order(), unsquash_duplicates, logger).create_locus_entries(manifest_reader)
 
     for (gtc_file, output_vcf_file) in zip(gtc_files, output_vcf_files):
         if gtc_file:
@@ -286,6 +280,7 @@ def main():
     parser.add_argument("--auxiliary-loci", dest="auxiliary_loci", default=None, required=False, help="VCF file with auxiliary definitions of loci (optional)")
     parser.add_argument("--filter-loci", dest="filter_loci", default=None, required=False, help="File containing list of loci names to filter from input manifest (optional)")
     parser.add_argument("--disable-genome-cache", dest="disable_genome_cache", default=False, action="store_true", help="Disable caching of genome reference data")
+    parser.add_argument("--include-attributes", dest="include_attributes", default=["GT", "GQ"], choices=FormatFactory.get_possible_formats(), nargs="*", help="Additional attributes to include in VCF FORMAT output (optional)")
     parser.add_argument("--version", action="version", version='%(prog)s ' + VERSION)
     args = parser.parse_args()
 
@@ -311,7 +306,7 @@ def main():
         manifest_reader = get_manifest_reader(args.manifest_file, genome_reader, loci_to_filter, args.skip_indels, logger)
         auxiliary_records = read_auxiliary_records(args.auxiliary_loci)
 
-        driver(gtc_paths, manifest_reader, genome_reader, output_vcf_files, args.expand_identifiers, args.unsquash_duplicates, auxiliary_records, logger)
+        driver(gtc_paths, manifest_reader, genome_reader, output_vcf_files, args.expand_identifiers, args.unsquash_duplicates, auxiliary_records, args.include_attributes, logger)
     except Exception as exception:
         logger.error(str(exception))
         logger.debug(traceback.format_exc(exception))

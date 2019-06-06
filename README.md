@@ -9,6 +9,7 @@ usage: gtc_to_vcf.py [-h] [--gtc-paths GTC_PATHS [GTC_PATHS ...]]
                      [--expand-identifiers] [--unsquash-duplicates]
                      [--auxiliary-loci AUXILIARY_LOCI]
                      [--filter-loci FILTER_LOCI] [--disable-genome-cache]
+                     [--include-attributes [{GT,GQ,BAF,LRR} [{GT,GQ,BAF,LRR} ...]]]
                      [--version]
 
 Convert GTC file to VCF format
@@ -37,6 +38,9 @@ optional arguments:
                         input manifest (optional)
   --disable-genome-cache
                         Disable caching of genome reference data
+  --include-attributes [{GT,GQ,BAF,LRR} [{GT,GQ,BAF,LRR} ...]]
+                        Additional attributes to include in VCF FORMAT output
+                        (optional) (default is GT GQ)
   --version             show program's version number and exit
 
 
@@ -58,17 +62,17 @@ The --output-vcf-path option may either be a file or directory. If the argument 
 
 ### Manifests
 The supplied manifest file may either be in CSV or BPM format; however, a CSV format manifest is required to generate indel records in the output VCF. When running the converter with a BPM manifest, indel processing must be explicitly disabled with the "--skip-indels" option. In either case, the manifest must provide RefStrand annotations. The GTC to VCF converter depends on the presence of accurate mapping information within the manifest, and may produce inaccurate results if the mapping information is incorrect. Mapping information should follow the implicit dbSNP standard, where
-* Positions are reported with 1-based indexing
-* Positions in the PAR are reported with mapping position to the X chromosome
-* For an insertion relative to the reference, the position of the base immediately 5' to the insertion (on the plus strand) is given
-* For a deletion relative to the reference, the position of most 5' deleted based (on the plus strand) is given
+* Positions are reported with 1-based indexing.
+* Positions in the PAR are reported with mapping position to the X chromosome.
+* For an insertion relative to the reference, the position of the base immediately 5' to the insertion (on the plus strand) is given.
+* For a deletion relative to the reference, the position of the most 5' deleted based (on the plus strand) is given.
 
 Any standard product manifest provided by Illumina will already follow these conventions. 
 ### Reference genome
 The contig identifiers in the provided genome FASTA file must match exactly the chromosome identifiers specified in the provided manifest. For a standard human product manifest, this means that the contig headers should read ">1" rather than ">chr1". For compatibility with BaseSpace Variant Interpreter (https://www.illumina.com/informatics/research/biological-data-interpretation/variant-interpreter.html), the specified path of the reference must contain either contain the string GrCh37 or GrCh38, for build 37 and 38, respectively. Suitable whole genome FASTA files can be built with the download_reference.sh script located within the scripts directory.
 
 ### Squashing duplicates
-In the manifest, there can be cases where the same variant is probed by multiple different assays. These assays may be the same design or alternate designs for the same locus. In the default mode of operation, these duplicates will be "squashed" into a single record in the VCF. The method used to incorporate information across multiple assays is under the latter "Output description" heading. When the "--unsquash-duplicates" option is provided, this "squashing" behavior is disabled, and each duplicate assay will be reported in a separate entry in the VCF file. This option is helpful when you are interested in investigating or validating the performance of individual assays, rather than trying to generate genotypes for specific variants. Note that if an locus has more than two alleles and is also queried with duplicated designs, the duplicates will not be unsquashed. 
+In the manifest, there can be cases where the same variant is probed by multiple different assays. These assays may be the same design or alternate designs for the same locus. In the default mode of operation, these duplicates will be "squashed" into a single record in the VCF. The method used to incorporate information across multiple assays is under the latter "Output description" heading. When the "--unsquash-duplicates" option is provided, this "squashing" behavior is disabled, and each duplicate assay will be reported in a separate entry in the VCF file. This option is helpful when you are interested in investigating or validating the performance of individual assays, rather than trying to generate genotypes for specific variants. Note that if a locus has more than two alleles and is also queried with duplicated designs, the duplicates will not be unsquashed. 
 
 ### Genome cache
 By default, the entire reference genome will be read into memory. Generally, this will be more efficient than reading data from the indexed reference on disk at the expense of greater memory utilization. For situations in which the genome caching is not desirable (low memory availability or a small input manifest), it is possible to disable this default behavior with the "--disable-genome-cache" option. 
@@ -83,9 +87,14 @@ This assay could be designed as a SNP assay with the following source sequence
 ATGC[A/C]NNNN
 
 The GTC converter tool provides an option to supply a list of auxiliary records (in VCF format) to restore the true alleles for these cases in the output VCF. There are several restrictions around this function
-* The auxiliary definition must be bi-allelic
-* The auxiliary definition must be a multi-nucleotide variant
-* There must not be multiple array assays (e.g., duplicates) for the locus 
+* The auxiliary definition must be bi-allelic.
+* The auxiliary definition must be a multi-nucleotide variant.
+* There must not be multiple array assays (e.g., duplicates) for the locus.
+
+### Include Attributes
+Default attributes to be included in the VCF are "GT" (genotype) and "GQ" (genotype score).
+With this option, you can compose which fields from the GTC are output to the VCF.
+The additional fields available (from GTC version 5) are "BAF" (B Allele Frequency) and "LRR" (Log R Ratio).
 
 ## Output description
 The VCF file output follows VCF4.1 format (https://samtools.github.io/hts-specs/VCFv4.1.pdf). Some additional details on output formatting:

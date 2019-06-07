@@ -1,7 +1,10 @@
-# Development
-* Python3 compatibility fixes
+# 1.2.0 (2019/05/24)
+* Fixes for python3 compatibility
 * Use chromosome ordering from reference
 * Use semi-colon as delimiter within identifier field
+* Fix for download_reference.sh to support more UNIX-y platforms
+* Various small typos
+* Support for outputting BAF and LRR
 
 # 1.1.1 (2018/03/27)
 * Output warning if any mismatch to reference genome in indel source sequence

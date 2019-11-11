@@ -1,4 +1,5 @@
 from vcf.parser import _Format
+from math import log10
 
 class GencallFormat(object):
     """
@@ -30,7 +31,7 @@ class GencallFormat(object):
     @staticmethod
     def get_format_obj():
         return _Format(
-            GencallFormat.get_id(), 1, "String", GencallFormat.get_description())
+            GencallFormat.get_id(), 1, "Integer", GencallFormat.get_description())
 
     def _get_min_gencall_score(self, bpm_records):
         """
@@ -55,6 +56,8 @@ class GencallFormat(object):
             sample_name (string): Name of sample
 
         Returns:
-            float: Minimum GenCall score (or None for empty arguments)
+            int: Minimum GenCall score, encoded as a phred quality (or None for empty arguments)
         """
-        return self._get_min_gencall_score(bpm_records)
+        min_gencall_score = self._get_min_gencall_score(bpm_records)
+        phred_quality_score = int(round(-10*log10(min(1.0, max(0.00001, 1 - min_gencall_score)))))
+        return phred_quality_score

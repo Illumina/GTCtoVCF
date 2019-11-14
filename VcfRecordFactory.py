@@ -68,12 +68,10 @@ class VcfRecordFactory(object):
                 if len(auxiliary_record.alleles) != 2:
                     raise Exception(
                         "Auxiliary locus definition for " + auxiliary_record.ID + " is not bi-allelic")
-                for allele in auxiliary_record.alleles:
-                    if len(str(allele)) <= 1:
-                        raise Exception("Auxiliary locus definition for " +
+                if any([len(str(allele)) <= 1 for allele in auxiliary_record.alleles]):
+                    raise Exception("Auxiliary locus definition for " +
                                         auxiliary_record.ID + " is not a multi-nucleotide variant")
-                    else:
-                        return self._get_record_for_auxiliary(bpm_record_group, auxiliary_record)
+                return self._get_record_for_auxiliary(bpm_record_group, auxiliary_record)
         else:
             if bpm_record.is_indel():
                 return self._get_record_for_indel(bpm_record_group)

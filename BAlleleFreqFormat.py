@@ -2,42 +2,7 @@ from vcf.parser import _Format
 from IlluminaBeadArrayFiles import RefStrand
 import numpy as np
 
-REVERSE_COMPLEMENT = {"A": "T", "T": "A", "G": "C", "C": "G", "I": "I", "D": "D"}
-
-def extract_alleles_from_snp_string(snp_string):
-    """
-    Splits SNP string into tuple of individual alleles
-
-    Args: snp_string (string): allele string of the format
-        [T/C] or [G/C]
-
-    Returns:
-         allele1 (string), allele2 (string)
-    """
-    (allele1, allele2) = snp_string[1:4].split("/")
-    assert allele1 in REVERSE_COMPLEMENT, "allele %r is invalid (expected A,T,G,C,I,D)" % allele1
-    assert allele2 in REVERSE_COMPLEMENT, "allele %r is invalid (expected A,T,G,C,I,D)" % allele2
-    return allele1, allele2
-
-
-def extract_reverse_complement_alleles_from_snp_string(snp_string):
-    """
-    Splits SNP string into tuple of individual alleles and
-    gets takes the reverse compliment to match strand 1
-
-    Args: snp_string (string): allele string of the format
-        [T/C] or [G/C]
-
-    Returns:
-         allele1 (string), allele2 (string)
-    """
-    # get alleles as tuple
-    allele1, allele2 = extract_alleles_from_snp_string(snp_string)
-    # get reverse compliment of bases and return
-    return REVERSE_COMPLEMENT[allele1], REVERSE_COMPLEMENT[allele2]
-
-
-def convert_indel_alleles(snp_string, vcf_record):
+def convert_indel_alleles(allele1, vcf_record):
     """
     Splits SNP string into tuple of individual alleles and
     converts to actual insertion/deletion alleles from the reference
@@ -49,7 +14,7 @@ def convert_indel_alleles(snp_string, vcf_record):
          allele1 (string), allele2 (string)
     """
     # get alleles as tuple, we only need allele1 because if its "I" we can assume allele2 will be "D" and vice-versa
-    allele1, _ = extract_alleles_from_snp_string(snp_string)
+    # allele1, _ = extract_alleles_from_snp_string(plus_strand_alleles)
 
     assert len(vcf_record.ALT) == 1, "Cannot convert indel for BAF with multiple ALT alleles"
     alt_allele = str(vcf_record.ALT[0])
@@ -98,19 +63,14 @@ class BAlleleFreqFormat(object):
             return "."
         for i in range(len(bpm_records)):
             bpm_record = bpm_records[i]
-            snp = bpm_record.snp
-            strand = bpm_record.ref_strand
             idx = bpm_record.index_num
             b_allele_freq = self._b_allele_freq[idx]
 
             # if indel, convert to actual ref and alt sequences
             if bpm_record.is_indel():
-                allele1, allele2 = convert_indel_alleles(snp, vcf_record)
-            # if  2/minus strand, get rev comp
-            elif strand == RefStrand.Minus:
-                allele1, allele2 = extract_reverse_complement_alleles_from_snp_string(snp)
+                allele1, allele2 = convert_indel_alleles(bpm_record.plus_strand_alleles[0], vcf_record)
             else:
-                allele1, allele2 = extract_alleles_from_snp_string(snp)
+                allele1, allele2 = bpm_record.plus_strand_alleles
 
             # normalize to reference allele
             ref_allele = vcf_record.REF

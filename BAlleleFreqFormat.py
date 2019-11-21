@@ -2,27 +2,22 @@ from vcf.parser import _Format
 from IlluminaBeadArrayFiles import RefStrand
 import numpy as np
 
-def convert_indel_alleles(allele1, vcf_record):
+def convert_indel_alleles(indel_allele, vcf_record):
     """
-    Splits SNP string into tuple of individual alleles and
-    converts to actual insertion/deletion alleles from the reference
+    Converts BPM allele to actual insertion/deletion alleles from the reference
 
-    Args: snp_string (string): allele string of the format
-        [I/D] or [D/I]
+    Args: indel_allele (string): BPM indel allele (I or D)
 
     Returns:
          allele1 (string), allele2 (string)
     """
-    # get alleles as tuple, we only need allele1 because if its "I" we can assume allele2 will be "D" and vice-versa
-    # allele1, _ = extract_alleles_from_snp_string(plus_strand_alleles)
-
     assert len(vcf_record.ALT) == 1, "Cannot convert indel for BAF with multiple ALT alleles"
     alt_allele = str(vcf_record.ALT[0])
     ref_allele = vcf_record.REF
     # Assuming whichever sequence is smaller is the deletion and the larger is the insertion
     assert len(alt_allele) > len(ref_allele) or len(ref_allele) > len(alt_allele), "REF allele %r and ALT allele %r same length, cannot determine insertion or deletion" % (ref_allele, alt_allele)
     deletion_allele, insertion_allele = (alt_allele, ref_allele) if len(alt_allele) < len(ref_allele) else (ref_allele, alt_allele)
-    if allele1 == "I":
+    if indel_allele == "I": # We only need 1 allele because if its "I" we can assume allele2 will be "D" and vice-versa
         return insertion_allele, deletion_allele
     return deletion_allele, insertion_allele
 

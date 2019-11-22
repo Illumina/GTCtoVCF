@@ -310,7 +310,7 @@ class GenotypeFormat(object):
                 int_genotype = self._genotypes[record.index_num]
                 if int_genotype != 0:
                     nucleotide_genotypes.append(convert_ab_genotype_to_nucleotide(
-                        int_genotype, bpm_records[0].plus_strand_alleles))
+                        int_genotype, record.plus_strand_alleles))
             vcf_genotype = convert_indel_genotype_to_vcf(
                 nucleotide_genotypes, vcf_record, bpm_records[0].is_deletion, ploidy)
         else:

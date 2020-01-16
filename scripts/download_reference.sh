@@ -6,20 +6,28 @@ then
     exit 1
 fi
 
-output_file=`readlink -f ${1}`
+if [[ "$OSTYPE" == "linux-gnu" ]]; then
+    output_file=`readlink -f ${1}`
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    output_file=`greadlink -f ${1}`
+else
+    echo "Error: Unsupported OS ${OSTYPE}"
+	exit 1
+fi
+
 output_dir=`dirname ${output_file}`
 genome_build=${2:-"37"}
 
 if [ ${genome_build} = "37" ]; then
 	remote="ftp://ftp.ncbi.nlm.nih.gov/genomes/Homo_sapiens/ARCHIVE/BUILD.37.3/Assembled_chromosomes/seq"
 elif [ ${genome_build} = "38" ]; then
-    remote=ftp://ftp.ncbi.nlm.nih.gov/genomes/Homo_sapiens/Assembled_chromosomes/seq/
+    remote="ftp://ftp.ncbi.nlm.nih.gov/genomes/Homo_sapiens/ARCHIVE/ANNOTATION_RELEASE.109/Assembled_chromosomes/seq/"
 else
 	echo "Error: Unsupported genome build ${genome_build}, valid values are 37,38"
 	exit 1
 fi
 
-temp_dir=`mktemp -d -p ${output_dir}`
+temp_dir=`mktemp -d 2>/dev/null || mktemp -d -t ${output_dir}`
 pushd ${temp_dir}
 
 for chrom in `seq 1 22` X Y MT
@@ -30,7 +38,7 @@ done
 for chrom in `seq 1 22` X Y MT
 do
     echo ">${chrom}" >> ${output_file}
-    gunzip -c *_ref_*chr${chrom}.fa.gz | grep -v ">" >> ${output_file}
+    gunzip -c *_ref_*chr${chrom}.fa.gz | grep -v ">" >> "${output_file}"
 done
 
 if hash samtools 2>/dev/null; then

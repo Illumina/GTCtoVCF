@@ -1,3 +1,9 @@
+# 1.2.1 (2020/03/28)
+* Fix for large manifests with norm id byte-wrapping issue (e.g. Omni5)
+* Fixes for aux VCF MNV handling
+* Updates GenCallScore to phred-scaled int
+* Updates to download_reference.sh for new genome build location and to work on OSX
+
 # 1.2.0 (2019/05/24)
 * Fixes for python3 compatibility
 * Use chromosome ordering from reference

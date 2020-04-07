@@ -69,7 +69,7 @@ The supplied manifest file may either be in CSV or BPM format; however, a CSV fo
 
 Any standard product manifest provided by Illumina will already follow these conventions. 
 ### Reference genome
-The contig identifiers in the provided genome FASTA file must match exactly the chromosome identifiers specified in the provided manifest. For a standard human product manifest, this means that the contig headers should read ">1" rather than ">chr1". For compatibility with BaseSpace Variant Interpreter (https://www.illumina.com/informatics/research/biological-data-interpretation/variant-interpreter.html), the specified path of the reference must contain either contain the string GrCh37 or GrCh38, for build 37 and 38, respectively. Suitable whole genome FASTA files can be built with the download_reference.sh script located within the scripts directory.
+The contig identifiers in the provided genome FASTA file must match exactly the chromosome identifiers specified in the provided manifest. For a standard human product manifest, this means that the contig headers should read ">1" rather than ">chr1". For compatibility with BaseSpace Variant Interpreter (https://www.illumina.com/informatics/research/biological-data-interpretation/variant-interpreter.html), the specified path of the reference must contain either contain the string GrCh37 or GrCh38, for build 37 and 38, respectively. Suitable whole genome FASTA files can be built with the download_reference.sh script located within the scripts directory. This bash script is dependent on samtools (http://www.htslib.org/download/). If running on OSX, you may need to install coreutils (e.g. `brew install coreutils`).
 
 ### Squashing duplicates
 In the manifest, there can be cases where the same variant is probed by multiple different assays. These assays may be the same design or alternate designs for the same locus. In the default mode of operation, these duplicates will be "squashed" into a single record in the VCF. The method used to incorporate information across multiple assays is under the latter "Output description" heading. When the "--unsquash-duplicates" option is provided, this "squashing" behavior is disabled, and each duplicate assay will be reported in a separate entry in the VCF file. This option is helpful when you are interested in investigating or validating the performance of individual assays, rather than trying to generate genotypes for specific variants. Note that if a locus has more than two alleles and is also queried with duplicated designs, the duplicates will not be unsquashed. 
@@ -122,6 +122,7 @@ conda install -c bioconda pysam=0.9.0
 ```
 where conda is a the package manager binary located in the installation location specified in the first step. 
 
+##
 ## License
 
 Copyright 2018 Illumina

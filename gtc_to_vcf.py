@@ -8,16 +8,16 @@ import traceback
 import tempfile
 from vcf.parser import Writer, Reader
 
-from BPMReader import BPMReader, CSVManifestReader, ManifestFilter
-from LocusEntryFactory import LocusEntryFactory
-from CallFactory import CallFactory
-from ReferenceGenome import ReferenceGenome, CachedReferenceGenome
-from IlluminaBeadArrayFiles import GenotypeCalls
-from VcfRecordFactory import VcfRecordFactory
-from ReaderTemplateFactory import ReaderTemplateFactory
-from FormatFactory import FormatFactory
+from gtc_to_vcf.BPMReader import BPMReader, CSVManifestReader, ManifestFilter
+from gtc_to_vcf.LocusEntryFactory import LocusEntryFactory
+from gtc_to_vcf.CallFactory import CallFactory
+from gtc_to_vcf.ReferenceGenome import ReferenceGenome, CachedReferenceGenome
+from gtc_to_vcf.IlluminaBeadArrayFiles import GenotypeCalls
+from gtc_to_vcf.VcfRecordFactory import VcfRecordFactory
+from gtc_to_vcf.ReaderTemplateFactory import ReaderTemplateFactory
+from gtc_to_vcf.FormatFactory import FormatFactory
 
-VERSION = "1.2.1"
+VERSION = "1.3.0"
 
 def is_dir_writable(parent_dir):
     try:

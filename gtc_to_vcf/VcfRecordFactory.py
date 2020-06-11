@@ -1,5 +1,7 @@
-from .IlluminaBeadArrayFiles import RefStrand
 from vcf.model import _Record, _Substitution
+
+from .IlluminaBeadArrayFiles import RefStrand
+
 
 def check_reference_allele(reference_base, bpm_record_group):
     """
@@ -16,6 +18,7 @@ def check_reference_allele(reference_base, bpm_record_group):
     if any([reference_base in record.plus_strand_alleles for record in bpm_record_group]):
         return True
     return False
+
 
 class VcfRecordFactory(object):
     """
@@ -56,13 +59,16 @@ class VcfRecordFactory(object):
         """
         bpm_record = bpm_record_group[0]
 
-        if self._auxiliary_records and any([bpm_record.name in self._auxiliary_records for bpm_record in bpm_record_group]):
+        if self._auxiliary_records and any(
+                [bpm_record.name in self._auxiliary_records for bpm_record in bpm_record_group]):
             if len(bpm_record_group) > 1:
                 raise Exception(
-                    "Unable to use auxiliary definition of locus " + self._get_identifier(bpm_record_group) + " with multiple assays")
+                    "Unable to use auxiliary definition of locus " + self._get_identifier(
+                        bpm_record_group) + " with multiple assays")
             elif bpm_record.is_indel():
                 raise Exception(
-                    "Unable to use auxiliary definition of locus " + self._get_identifier(bpm_record_group) + " with indel assay")
+                    "Unable to use auxiliary definition of locus " + self._get_identifier(
+                        bpm_record_group) + " with indel assay")
             else:
                 auxiliary_record = self._auxiliary_records[bpm_record.name]
                 if len(auxiliary_record.alleles) != 2:
@@ -70,7 +76,7 @@ class VcfRecordFactory(object):
                         "Auxiliary locus definition for " + auxiliary_record.ID + " is not bi-allelic")
                 if any([len(str(allele)) <= 1 for allele in auxiliary_record.alleles]):
                     raise Exception("Auxiliary locus definition for " +
-                                        auxiliary_record.ID + " is not a multi-nucleotide variant")
+                                    auxiliary_record.ID + " is not a multi-nucleotide variant")
                 return self._get_record_for_auxiliary(bpm_record_group, auxiliary_record)
         else:
             if bpm_record.is_indel():
@@ -108,7 +114,7 @@ class VcfRecordFactory(object):
         Returns:
             (string, string, list, dict) : ("", "PASS", [], {})
         """
-        return ("", "PASS", [], {})
+        return "", "PASS", [], {}
 
     def _get_record_for_auxiliary(self, bpm_record_group, auxiliary_record):
         """
@@ -152,7 +158,8 @@ class VcfRecordFactory(object):
         assert new_plus_strand_alleles[0] != new_plus_strand_alleles[1]
         bpm_record.plus_strand_alleles = new_plus_strand_alleles
 
-        return _Record(auxiliary_record.CHROM, auxiliary_record.POS, identifier, auxiliary_record.REF, auxiliary_record.ALT, qual, filt, info,
+        return _Record(auxiliary_record.CHROM, auxiliary_record.POS, identifier, auxiliary_record.REF,
+                       auxiliary_record.ALT, qual, filt, info,
                        self._format_factory.get_format_id_string(), sample_indexes)
 
     def _get_record_for_snv(self, bpm_record_group):
@@ -178,7 +185,7 @@ class VcfRecordFactory(object):
         reference_base = self._genome_reader.get_reference_bases(
             chrom, start_index, start_index + 1)
         if not check_reference_allele(reference_base, bpm_record_group):
-            self._logger.warn(
+            self._logger.warning(
                 "Reference allele is not queried for locus: " + identifier)
 
         alts = []

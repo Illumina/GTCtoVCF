@@ -1,8 +1,11 @@
 from itertools import combinations_with_replacement
+
 from vcf.parser import _Format
+
 from .IlluminaBeadArrayFiles import code2genotype
 
 CHANNEL_MAP = {"A": "T", "T": "A", "C": "G", "G": "C"}
+
 
 def get_expected_ploidy(gender, chrom):
     """
@@ -25,7 +28,6 @@ def format_vcf_genotype(vcf_allele1_char, vcf_allele2_char, ploidy):
     Args:
         vcf_allele1_char (string): 0,1,2 etc.
         vcf_allele2_char (string): 0,1,2, etc.
-        vcf_record (vcf._Record): Record for the entry analyzed
         ploidy(int): Expected ploidy.
 
     Returns
@@ -38,7 +40,6 @@ def format_vcf_genotype(vcf_allele1_char, vcf_allele2_char, ploidy):
         if vcf_allele1_char == vcf_allele2_char:
             return str(vcf_allele1_char)
 
-    vcf_genotype = ""
     if vcf_allele2_char < vcf_allele1_char:
         vcf_genotype = str(vcf_allele2_char) + "/" + str(vcf_allele1_char)
     else:
@@ -58,17 +59,17 @@ def convert_ab_genotype_to_nucleotide(ab_genotype, plus_strand_alleles):
             tuple(string): Tuple of length 2 with nucleotide alleles on plus strand (e.g., ('A', 'C')). NC is ('-', '-')
     """
     if ab_genotype == 0:
-        return ('-', '-')
-    return tuple([plus_strand_alleles[0] if ab_allele == "A" else plus_strand_alleles[1] for ab_allele in code2genotype[ab_genotype]])
+        return '-', '-'
+    return tuple([plus_strand_alleles[0] if ab_allele == "A" else plus_strand_alleles[1] for ab_allele in
+                  code2genotype[ab_genotype]])
 
 
-def convert_indel_genotype_to_vcf(nucleotide_genotypes, vcf_record, is_deletion, ploidy):
+def convert_indel_genotype_to_vcf(nucleotide_genotypes, is_deletion, ploidy):
     """
     For indel, convert indel SNP genotype (e.g., I/D) into VCF genotype (e.g, 0/1)
 
     Args:
         nucleotide_genotypes (string,string): SNP genotype from manifest (e.g., ('D', 'I'))
-        vcf_record (vcf._Record): Corresponding VCF record (define reference and alternate allele)
         is_deletion (bool): Whether the BPM record that produced the nucleotide genotypes is a reference deletion
         ploidy (int): Expected ploidy
 
@@ -103,6 +104,7 @@ def convert_nucleotide_genotype_to_vcf(nucleotide_genotype, vcf_record, ploidy):
     use "convert_indel_genotype_to_vcf"
 
     Args:
+        vcf_record:
         nucleotide_genotype (tuple(string)): Tuple of length 2. Each element is nucleotide allele
             No call should be represented as ("-", "-")
         ploidy(int): value of estimated ploidy.
@@ -118,7 +120,7 @@ def convert_nucleotide_genotype_to_vcf(nucleotide_genotype, vcf_record, ploidy):
     try:
         vcf_allele1_char = vcf_record.alleles.index(nucleotide_genotype[0])
         vcf_allele2_char = vcf_record.alleles.index(nucleotide_genotype[1])
-    except:
+    except Exception:
         raise Exception(
             "Could not index alleles in VCF record " + vcf_record.ID)
 
@@ -187,8 +189,7 @@ class RecordCombiner(object):
 
         for allele in record_plus_genotype:
             # check for alleles that must be present in a consistent genotype
-            consistent_alleles = []
-            consistent_alleles.append(allele)
+            consistent_alleles = [allele]
             if record.assay_type == 0:  # Inf II
                 consistent_alleles.append(CHANNEL_MAP[allele])
             if not any([consistent_allele in genotype for consistent_allele in consistent_alleles]):
@@ -225,14 +226,12 @@ class RecordCombiner(object):
                 if self._record_inconsistent_with_genotype(record, possible_genotypes[idx]):
                     idx2inconsistent[idx] = True
                     break
-        return [genotype for (genotype, is_inconsistent) in zip(possible_genotypes, idx2inconsistent) if not is_inconsistent]
+        return [genotype for (genotype, is_inconsistent) in zip(possible_genotypes, idx2inconsistent) if
+                not is_inconsistent]
 
     def combine_genotypes(self):
         """
         Generate the combined genotype from all assays at this site
-
-        Args:
-            None
 
         Returns:
             (string, string): The combined genotype (on the plus strand) at this site (e.g., ("A", "C") ) No call is ("-", "-")
@@ -249,14 +248,11 @@ class RecordCombiner(object):
         # no-call
         if len(allowable_genotypes) == 1:
             return allowable_genotypes[0]
-        return ("-", "-")
+        return "-", "-"
 
     def combine_names(self):
         """
         Generate the combined name for thi sgroup of records
-
-        Args:
-            None
 
         Returns:
             string: The combined names
@@ -271,6 +267,7 @@ class GenotypeFormat(object):
     """
     Generate GT format information for VCF
     """
+
     def __init__(self, logger, gender, genotypes):
         self._gender = gender
         self._genotypes = genotypes
@@ -288,14 +285,13 @@ class GenotypeFormat(object):
     def get_format_obj():
         return _Format(GenotypeFormat.get_id(), 1, "String", GenotypeFormat.get_description())
 
-    def generate_sample_format_info(self, bpm_records, vcf_record, sample_name):
+    def generate_sample_format_info(self, bpm_records, vcf_record):
         """
         Get the sample genotype
 
         Args:
             bpm_records (list(BPMRecord)): List of BPM records
             vcf_record (vcf._Record): Corresponding VCF record
-            sample_name (string): The sample name
 
         Returns:
             string: GT sample format string (e.g., "0/1")
@@ -312,7 +308,7 @@ class GenotypeFormat(object):
                     nucleotide_genotypes.append(convert_ab_genotype_to_nucleotide(
                         int_genotype, record.plus_strand_alleles))
             vcf_genotype = convert_indel_genotype_to_vcf(
-                nucleotide_genotypes, vcf_record, bpm_records[0].is_deletion, ploidy)
+                nucleotide_genotypes, bpm_records[0].is_deletion, ploidy)
         else:
             if len(bpm_records) > 1:
                 combiner = RecordCombiner(

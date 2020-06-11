@@ -1,6 +1,6 @@
-from vcf.parser import _Format
-from .IlluminaBeadArrayFiles import RefStrand
 import numpy as np
+from vcf.parser import _Format
+
 
 def convert_indel_alleles(indel_allele, vcf_record):
     """
@@ -15,16 +15,21 @@ def convert_indel_alleles(indel_allele, vcf_record):
     alt_allele = str(vcf_record.ALT[0])
     ref_allele = vcf_record.REF
     # Assuming whichever sequence is smaller is the deletion and the larger is the insertion
-    assert len(alt_allele) > len(ref_allele) or len(ref_allele) > len(alt_allele), "REF allele %r and ALT allele %r same length, cannot determine insertion or deletion" % (ref_allele, alt_allele)
-    deletion_allele, insertion_allele = (alt_allele, ref_allele) if len(alt_allele) < len(ref_allele) else (ref_allele, alt_allele)
-    if indel_allele == "I": # We only need 1 allele because if its "I" we can assume allele2 will be "D" and vice-versa
+    assert len(alt_allele) > len(ref_allele) or len(ref_allele) > len(
+        alt_allele), "REF allele %r and ALT allele %r same length, cannot determine insertion or deletion" % (
+        ref_allele, alt_allele)
+    deletion_allele, insertion_allele = (alt_allele, ref_allele) if len(alt_allele) < len(ref_allele) else (
+        ref_allele, alt_allele)
+    if indel_allele == "I":  # We only need 1 allele because if its "I" we can assume allele2 will be "D" and vice-versa
         return insertion_allele, deletion_allele
     return deletion_allele, insertion_allele
+
 
 class BAlleleFreqFormat(object):
     """
     Generate b allele frequency format information for VCF
     """
+
     def __init__(self, logger, b_allele_freq):
         self._b_allele_freq = b_allele_freq
         self._logger = logger
@@ -42,7 +47,7 @@ class BAlleleFreqFormat(object):
         # arguments should be: ['id', 'num', 'type', 'desc']
         return _Format(BAlleleFreqFormat.get_id(), 1, "Float", BAlleleFreqFormat.get_description())
 
-    def generate_sample_format_info(self, bpm_records, vcf_record, sample_name):
+    def generate_sample_format_info(self, bpm_records, vcf_record):
         """
         Get the sample B allele frequency
 
@@ -69,7 +74,8 @@ class BAlleleFreqFormat(object):
 
             # normalize to reference allele
             ref_allele = vcf_record.REF
-            assert allele1 == ref_allele or allele2 == ref_allele, "allele1: %r or allele2 %r do not match ref: %r" % (allele1, allele2, ref_allele)
+            assert allele1 == ref_allele or allele2 == ref_allele, "allele1: %r or allele2 %r do not match ref: %r" % (
+                allele1, allele2, ref_allele)
             # if allele1 is reference, then B allele is correct
             if allele1 == ref_allele:
                 b_allele_freq_list.append(b_allele_freq)

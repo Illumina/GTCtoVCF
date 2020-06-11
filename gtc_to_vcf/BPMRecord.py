@@ -1,7 +1,8 @@
-from IlluminaBeadArrayFiles import RefStrand
+from .IlluminaBeadArrayFiles import RefStrand
 
 COMPLEMENT_MAP = dict(zip("ABCDGHKMRTVYNID", "TVGHCDMKYABRNID"))
 REQUIRED_INDEL_CONTEXT_LENGTH = 3
+
 
 def reverse(sequence):
     """
@@ -29,6 +30,7 @@ def complement(sequence):
     """
     return "".join(COMPLEMENT_MAP[x] for x in sequence)
 
+
 def determine_left_shift(five_prime, indel, three_prime):
     """
     Adjust 5' and 3' context of indel such that
@@ -49,7 +51,8 @@ def determine_left_shift(five_prime, indel, three_prime):
     while len(indel) * five_prime[-1] == indel:
         three_prime = five_prime[-1] + three_prime
         five_prime = five_prime[:-1]
-    return (five_prime, three_prime)
+    return five_prime, three_prime
+
 
 def reverse_complement(sequence):
     """
@@ -62,6 +65,7 @@ def reverse_complement(sequence):
         string: The reverse-complement of the input sequence
     """
     return reverse(complement(sequence))
+
 
 class BPMRecord(object):
     """
@@ -81,7 +85,8 @@ class BPMRecord(object):
         is_deletion (bool): Whether indel record represents deletion, None for SNV
     """
 
-    def __init__(self, name, address_a, probe_a, chromosome, pos, snp, ref_strand, assay_type, indel_source_sequence, source_strand, ilmn_strand, genome_reader, index, logger):
+    def __init__(self, name, address_a, probe_a, chromosome, pos, snp, ref_strand, assay_type, indel_source_sequence,
+                 source_strand, ilmn_strand, genome_reader, index, logger):
         """
         Create a new BPM record
 
@@ -137,16 +142,14 @@ class BPMRecord(object):
         """
         Check whether a BPM record represents an indel
 
-        Args:
-            None
-
         Returns:
             bool: True if record is indel
         """
         return "D" in self.snp
 
     def get_indel_source_sequences(self, ref_strand):
-        return self.indel_source_sequence.get_split_sequence(self.is_source_on_design_strand != (self.ref_strand == ref_strand), True)
+        return self.indel_source_sequence.get_split_sequence(
+            self.is_source_on_design_strand != (self.ref_strand == ref_strand), True)
 
     def _calculate_is_deletion(self):
         if self.chromosome == "0" or self.pos == 0:
@@ -158,30 +161,40 @@ class BPMRecord(object):
         # get indel sequence on the plus strand
         (five_prime, indel_sequence, three_prime) = self.get_indel_source_sequences(RefStrand.Plus)
 
-        genomic_sequence = self._genome_reader.get_reference_bases(chromosome, start_index, start_index + len(indel_sequence))
+        genomic_sequence = self._genome_reader.get_reference_bases(chromosome, start_index,
+                                                                   start_index + len(indel_sequence))
         indel_sequence_match = indel_sequence == genomic_sequence
 
         genomic_deletion_five_prime = self._genome_reader.get_reference_bases(
             chromosome, start_index - len(five_prime), start_index)
         genomic_deletion_three_prime = self._genome_reader.get_reference_bases(
             chromosome, start_index + len(indel_sequence), start_index + len(indel_sequence) + len(three_prime))
-        (genomic_deletion_five_prime, genomic_deletion_three_prime) = determine_left_shift(genomic_deletion_five_prime, indel_sequence, genomic_deletion_three_prime)
+        (genomic_deletion_five_prime, genomic_deletion_three_prime) = determine_left_shift(genomic_deletion_five_prime,
+                                                                                           indel_sequence,
+                                                                                           genomic_deletion_three_prime)
 
         genomic_insertion_five_prime = self._genome_reader.get_reference_bases(
             chromosome, start_index - len(five_prime) + 1, start_index + 1)
         genomic_insertion_three_prime = self._genome_reader.get_reference_bases(
             chromosome, start_index + 1, start_index + len(three_prime) + 1)
-        (genomic_insertion_five_prime, genomic_insertion_three_prime) = determine_left_shift(genomic_insertion_five_prime, indel_sequence, genomic_insertion_three_prime)
+        (genomic_insertion_five_prime, genomic_insertion_three_prime) = determine_left_shift(
+            genomic_insertion_five_prime, indel_sequence, genomic_insertion_three_prime)
 
-        deletion_context_match_lengths = (max_suffix_match(genomic_deletion_five_prime, five_prime), max_prefix_match(genomic_deletion_three_prime, three_prime))
-        max_deletion_context = min(len(genomic_deletion_five_prime), len(five_prime)) + min(len(genomic_deletion_three_prime), len(three_prime)) + len(indel_sequence)
-        deletion_context_score = (sum(deletion_context_match_lengths) + len(indel_sequence) if indel_sequence_match else 0)/float(max_deletion_context)
+        deletion_context_match_lengths = (max_suffix_match(genomic_deletion_five_prime, five_prime),
+                                          max_prefix_match(genomic_deletion_three_prime, three_prime))
+        max_deletion_context = min(len(genomic_deletion_five_prime), len(five_prime)) + min(
+            len(genomic_deletion_three_prime), len(three_prime)) + len(indel_sequence)
+        deletion_context_score = (sum(deletion_context_match_lengths) + len(
+            indel_sequence) if indel_sequence_match else 0) / float(max_deletion_context)
 
-        insertion_context_match_lengths = (max_suffix_match(genomic_insertion_five_prime, five_prime), max_prefix_match(genomic_insertion_three_prime, three_prime))
-        max_insertion_context = min(len(genomic_insertion_five_prime), len(five_prime)) + min(len(genomic_insertion_three_prime), len(three_prime))
-        insertion_context_score = sum(insertion_context_match_lengths)/float(max_insertion_context)
+        insertion_context_match_lengths = (max_suffix_match(genomic_insertion_five_prime, five_prime),
+                                           max_prefix_match(genomic_insertion_three_prime, three_prime))
+        max_insertion_context = min(len(genomic_insertion_five_prime), len(five_prime)) + min(
+            len(genomic_insertion_three_prime), len(three_prime))
+        insertion_context_score = sum(insertion_context_match_lengths) / float(max_insertion_context)
 
-        is_deletion = indel_sequence_match and deletion_context_score > insertion_context_score and min(deletion_context_match_lengths) >= 1
+        is_deletion = indel_sequence_match and deletion_context_score > insertion_context_score and min(
+            deletion_context_match_lengths) >= 1
 
         is_insertion = insertion_context_score > deletion_context_score and min(insertion_context_match_lengths) >= 1
 
@@ -191,14 +204,15 @@ class BPMRecord(object):
         if is_deletion:
             if deletion_context_score < 1.0:
                 self._logger.warn("Incomplete match of source sequence to genome for indel " + self.name)
-        
+
         if is_insertion:
             if insertion_context_score < 1.0:
                 self._logger.warn("Incomplete match of source sequence to genome for indel " + self.name)
 
         return is_deletion
 
-    def _determine_plus_strand_alleles(self, snp, ref_strand):
+    @staticmethod
+    def _determine_plus_strand_alleles(snp, ref_strand):
         """
         Return the nucleotides alleles for the record on the plus strand.
         If record is indel, will return alleles in terms of D/I SNP convention
@@ -222,6 +236,7 @@ class BPMRecord(object):
             raise Exception(
                 "Manifest must contain reference strand information")
 
+
 class IndelSourceSequence(object):
     """
     Represents the source sequence for an indel
@@ -231,6 +246,7 @@ class IndelSourceSequence(object):
         indel (string) : Indel sequence (on the design strand)
         three_prime (string) : Sequence 3' of indel (on the design strand)
     """
+
     def __init__(self, source_sequence):
         (self.five_prime, self.indel, self.three_prime) = self.split_source_sequence(source_sequence.upper())
 
@@ -246,13 +262,15 @@ class IndelSourceSequence(object):
             (five_prime, indel, three_prime) = Sequences of three components of indel source sequence
         """
         if generate_reverse_complement:
-            (five_prime, indel, three_prime) = (reverse_complement(self.three_prime), reverse_complement(self.indel), reverse_complement(self.five_prime))
+            (five_prime, indel, three_prime) = (
+                reverse_complement(self.three_prime), reverse_complement(self.indel),
+                reverse_complement(self.five_prime))
         else:
             (five_prime, indel, three_prime) = (self.five_prime, self.indel, self.three_prime)
 
         if left_shift:
             (five_prime, three_prime) = determine_left_shift(five_prime, indel, three_prime)
-        return (five_prime, indel, three_prime)
+        return five_prime, indel, three_prime
 
     @staticmethod
     def split_source_sequence(source_sequence):
@@ -268,24 +286,13 @@ class IndelSourceSequence(object):
         left_position = source_sequence.find("/")
         right_position = source_sequence.find("]")
         assert source_sequence[left_position - 1] == "-"
-        return (source_sequence[:(left_position - 2)], source_sequence[(left_position + 1):right_position], source_sequence[(right_position+1):])
+        return (source_sequence[:(left_position - 2)], source_sequence[(left_position + 1):right_position],
+                source_sequence[(right_position + 1):])
 
-DEGENERACY_MAP = {}
-DEGENERACY_MAP["A"] = "A"
-DEGENERACY_MAP["C"] = "C"
-DEGENERACY_MAP["G"] = "G"
-DEGENERACY_MAP["T"] = "T"
-DEGENERACY_MAP["R"] = "AG"
-DEGENERACY_MAP["Y"] = "CT"
-DEGENERACY_MAP["S"] = "GC"
-DEGENERACY_MAP["W"] = "AT"
-DEGENERACY_MAP["K"] = "GT"
-DEGENERACY_MAP["M"] = "AC"
-DEGENERACY_MAP["B"] = "CGT"
-DEGENERACY_MAP["D"] = "AGT"
-DEGENERACY_MAP["H"] = "ACT"
-DEGENERACY_MAP["V"] = "ACG"
-DEGENERACY_MAP["N"] = "ACGT"
+
+DEGENERACY_MAP = {"A": "A", "C": "C", "G": "G", "T": "T", "R": "AG", "Y": "CT", "S": "GC", "W": "AT", "K": "GT",
+                  "M": "AC", "B": "CGT", "D": "AGT", "H": "ACT", "V": "ACG", "N": "ACGT"}
+
 
 def max_suffix_match(str1, str2):
     """
@@ -309,6 +316,7 @@ def max_suffix_match(str1, str2):
         else:
             break
     return result
+
 
 def max_prefix_match(str1, str2):
     """

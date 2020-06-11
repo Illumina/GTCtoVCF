@@ -1,7 +1,9 @@
 import os
-from tempfile import mkstemp
 from collections import OrderedDict
+from tempfile import mkstemp
+
 from vcf.parser import Reader, _Contig
+
 
 class ReaderTemplateFactory(object):
     """Class to create new reader templates"""
@@ -83,9 +85,6 @@ class ReaderTemplateFactory(object):
     def create_header_contigs(self):
         """
         Create contig information for the header
-
-        Args:
-            None
 
         Returns
             dict(string,_Contig): Contig information

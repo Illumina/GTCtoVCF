@@ -1,5 +1,7 @@
-from vcf.parser import _Format
 from math import log10
+
+from vcf.parser import _Format
+
 
 class GencallFormat(object):
     """
@@ -46,18 +48,16 @@ class GencallFormat(object):
         """
         return min(self._gencall_scores[record.index_num] for record in bpm_records)
 
-    def generate_sample_format_info(self, bpm_records, vcf_record, sample_name):
+    def generate_sample_format_info(self, bpm_records):
         """
         Returns sample format info (GQ score)
 
         Args:
             bpm_records (iter(BPMRecord)) : BPM records
-            vcf_record (vcf._Record): VCF record
-            sample_name (string): Name of sample
 
         Returns:
             int: Minimum GenCall score, encoded as a phred quality (or None for empty arguments)
         """
         min_gencall_score = self._get_min_gencall_score(bpm_records)
-        phred_quality_score = int(round(-10*log10(min(1.0, max(0.00001, 1 - min_gencall_score)))))
+        phred_quality_score = int(round(-10 * log10(min(1.0, max(0.00001, 1 - min_gencall_score)))))
         return phred_quality_score

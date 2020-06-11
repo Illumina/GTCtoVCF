@@ -1,5 +1,6 @@
-from .IlluminaBeadArrayFiles import BeadPoolManifest, RefStrand
 from .BPMRecord import BPMRecord, IndelSourceSequence
+from .IlluminaBeadArrayFiles import BeadPoolManifest, RefStrand
+
 
 class BPMReader(object):
     """
@@ -28,15 +29,16 @@ class BPMReader(object):
         """
         Get BPM records from the reader
 
-        Args:
-            None
-
         Yields:
             BPMRecord: Next BPMRecord in the file
         """
         bpm = self._bpm
         for idx in range(len(bpm.addresses)):
-            yield BPMRecord(bpm.names[idx], bpm.addresses[idx], None, bpm.chroms[idx], bpm.map_infos[idx], bpm.snps[idx], bpm.ref_strands[idx], bpm.assay_types[idx], None, None, None, None, idx, self._logger)
+            # noinspection PyTypeChecker
+            yield BPMRecord(bpm.names[idx], bpm.addresses[idx], None, bpm.chroms[idx], bpm.map_infos[idx],
+                            bpm.snps[idx], bpm.ref_strands[idx], bpm.assay_types[idx], None, None, None, None, idx,
+                            self._logger)
+
 
 class ManifestFilter(object):
     """
@@ -77,6 +79,7 @@ class ManifestFilter(object):
                 continue
             yield record
 
+
 class CSVManifestReader(object):
     """
     Get records from a CSV manifest
@@ -107,9 +110,6 @@ class CSVManifestReader(object):
         """
         Get BPM records from the reader
 
-        Args:
-            None
-
         Yields:
             BPMRecord: Next BPMRecord in the file
 
@@ -127,7 +127,7 @@ class CSVManifestReader(object):
                     try:
                         required_column2idx[required_column] = header.index(
                             required_column)
-                    except:
+                    except Exception:
                         raise Exception(
                             "Manifest is missing required column " + required_column)
                 continue
@@ -138,7 +138,8 @@ class CSVManifestReader(object):
             if in_data:
                 idx += 1
                 bits = line.rstrip().split(",")
-                (source_strand, ilmn_strand, name, chrom, map_info, ref_strand, source_seq, snp, addressb_id, probe_a) = [
+                (source_strand, ilmn_strand, name, chrom, map_info, ref_strand, source_seq, snp, addressb_id,
+                 probe_a) = [
                     bits[required_column2idx[column]] for column in self._required_columns]
 
                 if "D" in snp:
@@ -148,6 +149,9 @@ class CSVManifestReader(object):
 
                 assay_type = 0 if addressb_id == "" else 1
                 try:
-                    yield BPMRecord(name, 0, probe_a, chrom, map_info, snp, RefStrand.from_string(ref_strand), assay_type, indel_source_sequence, source_strand, ilmn_strand, self._genome_reader, idx, self._logger)
+                    # noinspection PyTypeChecker
+                    yield BPMRecord(name, 0, probe_a, chrom, map_info, snp, RefStrand.from_string(ref_strand),
+                                    assay_type, indel_source_sequence, source_strand, ilmn_strand, self._genome_reader,
+                                    idx, self._logger)
                 except Exception as error:
-                    self._logger.warn("Failed to process entry for record %s: %s", name, str(error))
+                    self._logger.warning("Failed to process entry for record %s: %s", name, str(error))

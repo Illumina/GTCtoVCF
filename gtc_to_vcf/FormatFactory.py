@@ -1,6 +1,6 @@
-from .GenotypeFormat import GenotypeFormat
-from .GencallFormat import GencallFormat
 from .BAlleleFreqFormat import BAlleleFreqFormat
+from .GencallFormat import GencallFormat
+from .GenotypeFormat import GenotypeFormat
 from .LogRRatioFormat import LogRRatioFormat
 
 
@@ -48,32 +48,27 @@ class FormatFactory(object):
         """
         Get the concatenated string of all format IDs
 
-        Args:
-            None
-
         Returns
             string: The concatenated string of all format IDs
         """
         return ":".join(self._get_format_ids())
 
     def _get_format_ids(self):
+        # noinspection PyUnresolvedReferences
         """
-        Get a list with all format IDs
+                Get a list with all format IDs
 
-        Args:
-            None
+                Args:
+                    None
 
-        Returns:
-            list(string): List of all format IDs
-        """
+                Returns:
+                    list(string): List of all format IDs
+                """
         return [f.get_id() for f in self._format_classes]
 
     def get_format_objects(self):
         """
         Get a list with all formats (vcf.parser._Format)
-
-        Args:
-            None
 
         Returns
             list(vcf.parser._Format): List of all VCF formats
@@ -84,11 +79,11 @@ class FormatFactory(object):
         """
         Create the list of formats
 
-        Args:
-            None
-
         Returns
             None
+
+        Args:
+            gtc:
         """
         result = []
         # only append if ID is in command line args

@@ -1,5 +1,7 @@
 from collections import namedtuple
+
 from vcf.model import _Call
+
 
 class CallFactory(object):
     """
@@ -18,7 +20,7 @@ class CallFactory(object):
         Returns:
             CallFactory
         """
-        self._format_namedtuple =  namedtuple("format_tuple", [format_element.get_id() for format_element in formats])
+        self._format_namedtuple = namedtuple("format_tuple", [format_element.get_id() for format_element in formats])
         self._formats = formats
         self._sample_name = sample_name
         self._logger = logger
@@ -30,7 +32,6 @@ class CallFactory(object):
 
         Args:
             locus_entry (LocusEntry) : Locus entry that links together BPM records to VCF record
-            sample_name (string): Name of the sample
 
         Returns:
             vcf.model._Call - New call entry for this sample and locus
@@ -43,4 +44,3 @@ class CallFactory(object):
 
         data = self._format_namedtuple(*values)
         return _Call(locus_entry.vcf_record, self._sample_name, data)
-

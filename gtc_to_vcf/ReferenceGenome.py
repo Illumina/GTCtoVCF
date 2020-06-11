@@ -1,4 +1,6 @@
 import os
+
+# noinspection PyUnresolvedReferences
 from pysam import Fastafile
 
 
@@ -28,16 +30,13 @@ class ReferenceGenome(object):
 
         try:
             self._fasta_file = Fastafile(self.genome_fasta_file)
-        except:
+        except Exception:
             raise IOError("Could not read genome file: " +
                           self.genome_fasta_file)
 
     def _validate_reference_file(self):
         """
         Check whether reference file is valid
-
-        Args:
-            genome_fasta_file (string): Path to genome FASTA file
 
         Returns
             bool: True if valid
@@ -50,9 +49,6 @@ class ReferenceGenome(object):
         """
         Get the names and lengths of all contigs in a references
 
-        Args:
-            None
-
         Returns:
             list(tuple(string,int)): Returns a list representing the name and lengths of all contigs in reference
         """
@@ -61,9 +57,6 @@ class ReferenceGenome(object):
     def get_contig_order(self):
         """
         Get a dictionary with the ordering of the contigs
-
-        Args:
-            None
 
         Returns:
             dict(string,int): Return a dictionary mapping from contig name to order of that contig
@@ -98,6 +91,7 @@ class ReferenceGenome(object):
 
         return self._fasta_file.fetch(str(chrom), start, end)
 
+
 class CachedReferenceGenome(object):
     """
     Class to provide sequence data from a reference genome. All sequence
@@ -106,6 +100,7 @@ class CachedReferenceGenome(object):
     Attributes:
         genome_fasta_file (string): Path to reference genome file
     """
+
     def __init__(self, reference_genome, logger):
         self._logger = logger
         self._logger.info("Caching reference data")
@@ -134,9 +129,6 @@ class CachedReferenceGenome(object):
         """
         Get a dictionary with the ordering of the contigs
 
-        Args:
-            None
-
         Returns:
             dict(string,int): Return a dictionary mapping from contig name to order of that contig
         """
@@ -145,9 +137,6 @@ class CachedReferenceGenome(object):
     def get_contig_lengths(self):
         """
         Get the names and lengths of all contigs in a references
-
-        Args:
-            None
 
         Returns:
             list(tuple(string,int)): Returns a list representing the name and lengths of all contigs in reference

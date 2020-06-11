@@ -1,11 +1,12 @@
-from vcf.parser import _Format
 import numpy as np
+from vcf.parser import _Format
 
 
 class LogRRatioFormat(object):
     """
     Generate log R ratio format information for VCF
     """
+
     def __init__(self, logger, log_r_ratio):
         self._log_r_ratio = log_r_ratio
         self._logger = logger
@@ -23,7 +24,7 @@ class LogRRatioFormat(object):
         # arguments should be: ['id', 'num', 'type', 'desc']
         return _Format(LogRRatioFormat.get_id(), 1, "Float", LogRRatioFormat.get_description())
 
-    def generate_sample_format_info(self, bpm_records, vcf_record, sample_name):
+    def generate_sample_format_info(self, bpm_records, vcf_record):
         """
         Get the sample log R ratio
 

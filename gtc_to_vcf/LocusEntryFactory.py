@@ -1,5 +1,6 @@
-from .LocusEntry import LocusEntry
 from .IlluminaBeadArrayFiles import RefStrand
+from .LocusEntry import LocusEntry
+
 
 class LocusEntryFactory(object):
     """
@@ -12,7 +13,6 @@ class LocusEntryFactory(object):
 
         Args:
             vcf_record_factory (VcfRecordFactory): Creates vcf._Record objects
-            chrom_sort_function (func(string, int)): Function used to sort chromosomes
             unsquash_duplicates (bool): True to generate separate entries for duplicates
             logger (logging.Logger): Logger to report warnings/errors
         """
@@ -28,7 +28,6 @@ class LocusEntryFactory(object):
 
         Args:
             bpm_reader (BPMReader): Provides BPM records
-            loci_to_filter (set(string)): Set of loci names to filter from the manifest
 
         Returns:
             list(LocusEntry): List of locus entries corresponding to BPM records
@@ -36,7 +35,8 @@ class LocusEntryFactory(object):
         result = []
         for record_group in self._group_bpm_records(bpm_reader.get_bpm_records()):
             result.append(self._generate_locus_entry(record_group))
-        return sorted(result, key=lambda entry: (self._chrom_order[str(entry.vcf_record.CHROM)], entry.vcf_record.POS, entry.vcf_record.REF))
+        return sorted(result, key=lambda entry: (
+            self._chrom_order[str(entry.vcf_record.CHROM)], entry.vcf_record.POS, entry.vcf_record.REF))
 
     def _group_bpm_records(self, bpm_records):
         """
@@ -44,15 +44,16 @@ class LocusEntryFactory(object):
         group will be represented in the same VCF record
 
         Args:
-            bpm_reader (BPMReader): Provides BPM records
-            loci_to_filter (set(string)): Set of loci names to filter from the manifest
+            bpm_records (BPMReader): Provides BPM records
 
         Yields:
             list(BPMRecord): Next group of BPM records
         """
         position2record = {}
         for record in bpm_records:
-            position = (record.chromosome, record.pos, (record.get_indel_source_sequences(RefStrand.Plus)[1], record.is_deletion) if record.is_indel() else None)
+            position = (record.chromosome, record.pos, (
+                record.get_indel_source_sequences(RefStrand.Plus)[1],
+                record.is_deletion) if record.is_indel() else None)
             position2record.setdefault(position, []).append(record)
 
         for _, value in position2record.items():

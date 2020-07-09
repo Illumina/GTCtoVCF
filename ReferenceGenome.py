@@ -96,7 +96,7 @@ class ReferenceGenome(object):
             raise ValueError(
                 "FASTA reference is missing entry for chromosome " + str(chrom))
 
-        return self._fasta_file.fetch(str(chrom), start, end)
+        return self._fasta_file.fetch(str(chrom), start, end).upper()
 
 class CachedReferenceGenome(object):
     """

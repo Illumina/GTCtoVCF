@@ -9,6 +9,7 @@ from logging import Logger
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(os.path.join(SCRIPT_DIR, os.pardir))
 
+from ReferenceGenome import ReferenceGenome
 from GenotypeFormat import RecordCombiner
 from BPMRecord import BPMRecord
 from IlluminaBeadArrayFiles import RefStrand
@@ -101,6 +102,11 @@ class TestSourceSequence(unittest.TestCase):
         self.assertEqual(determine_left_shift("AACAA", "A", "GGG"), ("AAC", "AAGGG"))
         self.assertEqual(determine_left_shift("AACAA", "AAA", "GGG"), ("AAC", "AAGGG"))
         self.assertEqual(determine_left_shift("AACAA", "AAA", "AGGG"), ("AAC", "AAAGGG"))
+
+class TestReferenceGenome(unittest.TestCase):
+    def test_lowercase_fasta_should_return_uppercase(self):
+        genome = ReferenceGenome(os.path.join(SCRIPT_DIR, "data", "test_fasta.fa"), None)
+        self.assertEqual("ACGT", genome.get_reference_bases("5", 0, 5))
 
 class TestCombinedGenotypes(unittest.TestCase):
     def check_genotype(self, data, expected_genotype):

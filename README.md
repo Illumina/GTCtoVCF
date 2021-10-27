@@ -2,8 +2,7 @@
 
 ## Requirements
 
-**GTCtoVCF currently only works with python2.**
-The following python packages are required.
+**GTCtoVCF currently only works with python2** and the following packages are required.
 Note that the pysam package is currently not supported on the Windows platform.
 
 Requirement | Version

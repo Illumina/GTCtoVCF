@@ -26,6 +26,7 @@ where conda is a the package manager binary located in the installation location
 
 
 ## Usage
+
 ```none
 usage: gtc_to_vcf.py [-h] [--gtc-paths GTC_PATHS [GTC_PATHS ...]]
                      --manifest-file MANIFEST_FILE --genome-fasta-file
@@ -125,6 +126,35 @@ The additional fields available (from GTC version 5) are "BAF" (B Allele Frequen
 The VCF file output follows VCF4.1 format (https://samtools.github.io/hts-specs/VCFv4.1.pdf). Some additional details on output formatting:
 * Genotypes are adjusted to reflect the sample ploidy. Calls are haploid for loci on Y, MT and non-PAR chromosome X for males.
 * Multiple SNPs in the input manifest which are mapped to the same chromosomal coordinate (e.g. tri-allelic loci or duplicated sites) are collapsed into one VCF entry and a combined genotype generated. To produce the combined genotype, the set of all possible genotypes is enumerated based on the queried alleles. Genotypes which are not possible based on called alleles and assay design limitations (e.g. infiniumII designs cannot distinguish between A/T and C/G calls) are filtered. If only one consistent genotype remains after the filtering process, then the site is assigned this genotype  Otherwise, the genotype is ambiguous (more than 1) or inconsistent (less than 1) and a no-call is returned.  Please see 'test_class.py' in the 'tests' folder for unit tests and examples demonstrating  the genotype merging process.
+
+## Docker
+
+### Build
+
+Build the Docker image:
+
+```sh
+docker build -t gtc_to_vcf .
+```
+
+### Usage
+
+Set the full path to the location of the GTC files (`gtc_dir`), manifest csv or bpm (`manifest`), and reference fasta (`ref`). The reference fasta must be indexed with `samtools faidx`, with an accompanying `.fasta.fai` file. 
+
+```sh
+gtc_dir=/path/to/gtcs
+manifest=/data/projects/cag/iscan/gsa-manifest-clusterfile/GSA-24v3-0_A1.csv
+ref=/data/projects/cag/reference-data/reference-genomes/human_g1k_v37.fasta
+
+docker run --rm \
+-u $(id -u):$(id -g) \
+-v $gtc_dir:/data \
+-v $manifest:/tmp/$(basename ${manifest}) \
+-v $ref:/tmp/ref.fasta \
+-v ${ref}.fai:/tmp/ref.fasta.fai \
+gtc_to_vcf --gtc-paths . --manifest-file /tmp/$(basename ${manifest}) --genome-fasta-file /tmp/ref.fasta --output-vcf-path .
+
+```
 
 ## License
 

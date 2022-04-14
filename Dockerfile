@@ -17,10 +17,14 @@ COPY --from=0 /src/*whl /src/
 RUN apk update && apk add --no-cache py2-pip python2 xz-dev libcurl
 RUN pip install /src/*.whl && rm /src/*whl
 
-# Usage: 
+# Run
+WORKDIR /data
+ENTRYPOINT ["gtc_to_vcf.py"]
+
+## BUILD
+# docker build -t gtc_to_vcf .
+## USAGE 
 # gtc_dir=/path/to/gtc/files
 # manifest=/path/to/manifest.csv
 # ref=/path/to/reference.fasta (must be indexed)
-# docker run --rm -u $(id -u):$(id -g) -v ${gtc_dir}:/data -v ${manifest}:/tmp/manifest.csv -v ${ref}:/tmp/ref.fasta -v ${ref}.fai:/tmp/ref.fasta.fai gtc_to_vcf --gtc-paths . --manifest-file /tmp/manifest.csv --genome-fasta-file /tmp/ref.fasta --output-vcf-path . 
-WORKDIR /data
-ENTRYPOINT ["gtc_to_vcf.py"]
+# docker run --rm -u $(id -u):$(id -g) -v $gtc_dir:/data -v $manifest:/tmp/${manifest_filename} -v $ref:/tmp/ref.fasta -v ${ref}.fai:/tmp/ref.fasta.fai gtc_to_vcf --gtc-paths . --manifest-file /tmp/${manifest_filename} --genome-fasta-file /tmp/ref.fasta --output-vcf-path . 

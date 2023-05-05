@@ -1,5 +1,6 @@
 from GenotypeFormat import GenotypeFormat
 from GencallFormat import GencallFormat
+from GencallFormatReal import GencallFormatReal
 from BAlleleFreqFormat import BAlleleFreqFormat
 from LogRRatioFormat import LogRRatioFormat
 
@@ -31,6 +32,8 @@ class FormatFactory(object):
                 self._format_classes.append(GenotypeFormat)
             if GencallFormat.get_id() in formats_to_include:
                 self._format_classes.append(GencallFormat)
+            if GencallFormatReal.get_id() in formats_to_include:
+                self._format_classes.append(GencallFormatReal)
             if BAlleleFreqFormat.get_id() in formats_to_include:
                 self._format_classes.append(BAlleleFreqFormat)
             if LogRRatioFormat.get_id() in formats_to_include:
@@ -40,6 +43,7 @@ class FormatFactory(object):
     def get_possible_formats():
         valid_classes = [GenotypeFormat.get_id(),
                          GencallFormat.get_id(),
+                         GencallFormatReal.get_id(),
                          BAlleleFreqFormat.get_id(),
                          LogRRatioFormat.get_id()]
         return valid_classes
@@ -97,6 +101,9 @@ class FormatFactory(object):
                 self._logger, gtc.get_gender(), gtc.get_genotypes()))
         if GencallFormat.get_id() in self._formats_to_include:
             result.append(GencallFormat(
+                self._logger, gtc.get_genotype_scores()))
+        if GencallFormatReal.get_id() in self._formats_to_include:
+            result.append(GencallFormatReal(
                 self._logger, gtc.get_genotype_scores()))
         if BAlleleFreqFormat.get_id() in self._formats_to_include:
             result.append(BAlleleFreqFormat(

@@ -2,7 +2,7 @@
 
 ## Semi-archived state
 As of May 2023, it is now recommended to use the fully-supported Illumina solution:
-https://support.illumina.com/array/array_software/ima-array-analysis-cli.html for GTC to VCF conversion. That tool is the most up-to-date with bug fixes and improvements.
+[DRAGEN Array](https://support.illumina.com/array/array_software/dragen-array-secondary-analysis.html) for GTC to VCF conversion. That tool is the most up-to-date with bug fixes and improvements.
 This repository will remain open, but may be fully archived in the near future.
 
 ## Requirements

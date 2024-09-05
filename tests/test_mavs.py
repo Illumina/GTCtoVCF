@@ -28,6 +28,7 @@ class TestCombinedGenotypesMavs(unittest.TestCase):
         logger = Logger("test_genotype_combinations")
         data = []
         # Note the last field is the genotype where (0 = NC, 1 = AA, 2 = AB, 3 = BB)
+        # Note the field after the RefStrand is the assay_type where (0 = InfII, 1 = InfI)
         data.append((BPMRecord("ilmnseq_2:234627937", None, None, "", 0, "[A/G]", RefStrand.Minus, 0, None, None, None, None, 0, logger), 3))
         data.append((BPMRecord("ilmnseq_rs2011404.1_F2BT", None, None, "", 0, "[A/G]", RefStrand.Minus, 1, None, None, None, None, 0, logger), 3))
         data.append((BPMRecord("ilmnseq_rs2011404.2_F2BT", None, None, "", 0, "[A/C]", RefStrand.Minus, 1, None, None, None, None, 0, logger), 0))
